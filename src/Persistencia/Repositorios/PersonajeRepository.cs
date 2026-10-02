@@ -68,7 +68,8 @@ namespace Persistencia.Repositorios
 
             var pms = ObtenerParametros(entidad);
             int idGenerado = _context.QueryFirst<int>(sql, pms);
-
+            entidad.Id = idGenerado;
+            
             foreach (var hab in entidad.Habilidades)
             {
                 AgregarHabilidad(idGenerado, hab);
@@ -119,6 +120,8 @@ namespace Persistencia.Repositorios
                 "Asesino" => new Asesino(dto.Nombre, dto.VidaMax, dto.Ataque, dto.Defensa, dto.ProbabilidadCritico),
                 _ => throw new InvalidOperationException($"Tipo de personaje desconocido: {dto.Tipo}")
             };
+
+            p.Id = dto.Id;
             p.Vida = dto.Vida;
             return p;
         }

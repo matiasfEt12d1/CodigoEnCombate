@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Persistencia.Entidades;
 
 namespace Persistencia.Repositorios
@@ -30,6 +33,7 @@ namespace Persistencia.Repositorios
 
             return new Batalla(c1, c2)
             {
+                Id = dto.Id,
                 NumeroTurno = dto.NumeroTurno
             };
         }
@@ -55,32 +59,58 @@ namespace Persistencia.Repositorios
                 VALUES (@Combatiente1Id, @Combatiente2Id, @NumeroTurno, @EsFinalizada);
                 SELECT LAST_INSERT_ID();";
 
-            var c1Id = _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre", new { Nombre = entidad.Combatiente1.Nombre });
-            var c2Id = _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre", new { Nombre = entidad.Combatiente2.Nombre });
+            var c1Id = _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente1.Nombre });
+            var c2Id = _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente2.Nombre });
 
-            return _context.QueryFirst<int>(sql, new
+            int idGenerado = _context.QueryFirst<int>(sql, new
             {
                 Combatiente1Id = c1Id,
                 Combatiente2Id = c2Id,
                 entidad.NumeroTurno,
                 entidad.EsFinalizada
             });
+
+            entidad.Id = idGenerado;
+            return idGenerado;
         }
 
         public bool Actualizar(Batalla entidad)
         {
-            const string sql = "UPDATE Batallas SET numero_turno = @NumeroTurno, es_finalizada = @EsFinalizada WHERE id = @Id";
-            int id = _context.QueryFirst<int>(
-                "SELECT id FROM Batallas WHERE combatiente1_id = (SELECT id FROM Personajes WHERE nombre = @c1) AND combatiente2_id = (SELECT id FROM Personajes WHERE nombre = @c2) AND es_finalizada = 0",
-                new { c1 = entidad.Combatiente1.Nombre, c2 = entidad.Combatiente2.Nombre }
-            );
-            return _context.Execute(sql, new { Id = id, entidad.NumeroTurno, entidad.EsFinalizada }) > 0;
+            const string sql = @"
+                UPDATE Batallas 
+                SET numero_turno = @NumeroTurno, 
+                    es_finalizada = @EsFinalizada 
+                WHERE id = @Id";
+
+            return _context.Execute(sql, new 
+            { 
+                Id = entidad.Id,
+                entidad.NumeroTurno, 
+                entidad.EsFinalizada 
+            }) > 0;
         }
 
         public bool Eliminar(int id)
         {
             const string sql = "DELETE FROM Batallas WHERE id = @Id";
             return _context.Execute(sql, new { Id = id }) > 0;
+        }
+
+        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado)
+{
+            const string sql = @"
+                INSERT INTO historialbatallas (batalla_id, numero_turno, atacante_id, defensor_id, habilidad_usada, dano_causado, fecha_registro)
+                VALUES (@BatallaId, @NumeroTurno, @AtacanteId, @DefensorId, @HabilidadUsada, @DanoCausado, NOW())";
+
+            _context.Execute(sql, new
+            {
+                BatallaId = batallaId,
+                NumeroTurno = numeroTurno,
+                AtacanteId = atacanteId,
+                DefensorId = defensorId,
+                HabilidadUsada = habilidadUsada,
+                DanoCausado = danoCausado
+            });
         }
 
         private class BatallaDto

@@ -41,20 +41,28 @@ namespace Aplicacion
 
             Console.WriteLine("=== SIMULADOR DE BATALLAS - CÓDIGO EN COMBATE ===\n");
 
-            // 4. Registro e inserción de Personajes con Habilidades en MySQL
-            var guerrero = new Guerrero("Thor", vidaMax: 100, ataque: 22, defensa: 8, escudo: 15);
-            guerrero.AgregarHabilidad(new Habilidad("Golpe de Escudo", costoRecurso: 0, potencia: 10));
+            // 4. Registro e inserción de Personajes (solo si no existen)
+            var guerrero = personajeService.ObtenerPorNombre("Thor");
+            if (guerrero == null)
+            {
+                guerrero = new Guerrero("Thor", vidaMax: 100, ataque: 22, defensa: 8, escudo: 15);
+                guerrero.AgregarHabilidad(new Habilidad("Golpe de Escudo", costoRecurso: 0, potencia: 10));
+                personajeService.RegistrarPersonaje(guerrero);
+            }
 
-            var mago = new Mago("Gandalf", vidaMax: 80, ataque: 25, defensa: 4, manaMax: 30);
-            mago.AgregarHabilidad(new Habilidad("Bola de Fuego", costoRecurso: 10, potencia: 25));
+            var mago = personajeService.ObtenerPorNombre("Gandalf");
+            if (mago == null)
+            {
+                mago = new Mago("Gandalf", vidaMax: 80, ataque: 25, defensa: 4, manaMax: 30);
+                mago.AgregarHabilidad(new Habilidad("Bola de Fuego", costoRecurso: 10, potencia: 25));
+                personajeService.RegistrarPersonaje(mago);
+            }
 
-            var arquero = new Arquero("Robin", vidaMax: 85, ataque: 20, defensa: 5, cantidadFlechas: 5);
-            var asesino = new Asesino("Sombra", vidaMax: 75, ataque: 28, defensa: 3, probabilidadCritico: 0.35);
+            if (personajeService.ObtenerPorNombre("Robin") == null)
+                personajeService.RegistrarPersonaje(new Arquero("Robin", vidaMax: 85, ataque: 20, defensa: 5, cantidadFlechas: 5));
 
-            personajeService.RegistrarPersonaje(guerrero);
-            personajeService.RegistrarPersonaje(mago);
-            personajeService.RegistrarPersonaje(arquero);
-            personajeService.RegistrarPersonaje(asesino);
+            if (personajeService.ObtenerPorNombre("Sombra") == null)
+                personajeService.RegistrarPersonaje(new Asesino("Sombra", vidaMax: 75, ataque: 28, defensa: 3, probabilidadCritico: 0.35));
 
             Console.WriteLine("Personajes guardados correctamente en la base de datos.");
 

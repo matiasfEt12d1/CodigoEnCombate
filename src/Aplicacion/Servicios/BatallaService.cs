@@ -47,21 +47,38 @@ namespace Aplicacion.Servicios
             if (batalla.EsFinalizada)
                 throw new InvalidOperationException("La batalla ya ha finalizado.");
 
-            // Turno Combatiente 1 (ejecución polimórfica según la subclase)
-            batalla.Combatiente1.Atacar(batalla.Combatiente2);
+            var p1 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente1.Nombre) 
+                    ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente1.Nombre}' en la BD.");
+            var p2 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente2.Nombre) 
+                    ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente2.Nombre}' en la BD.");
 
-            // Si el combatiente 2 sigue con vida, contraataca
+            // 1. Ataque Combatiente 1 -> Combatiente 2
+            int vidaAntesP2 = batalla.Combatiente2.Vida;
+            batalla.Combatiente1.Atacar(batalla.Combatiente2);
+            int danoP1 = Math.Max(0, vidaAntesP2 - batalla.Combatiente2.Vida);
+
+            _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p1.Id, p2.Id, null, danoP1);
+
+            // 2. Contraataque Combatiente 2 -> Combatiente 1 (si sigue vivo)
             if (batalla.Combatiente2.EstaVivo)
             {
+                int vidaAntesP1 = batalla.Combatiente1.Vida;
                 batalla.Combatiente2.Atacar(batalla.Combatiente1);
+                int danoP2 = Math.Max(0, vidaAntesP1 - batalla.Combatiente1.Vida);
+
+                _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p2.Id, p1.Id, null, danoP2);
             }
 
             batalla.NumeroTurno++;
+
+            // Persiste el estado actualizado de la batalla y de los personajes
+            _personajeRepository.Actualizar(batalla.Combatiente1);
+            _personajeRepository.Actualizar(batalla.Combatiente2);
             _batallaRepository.Actualizar(batalla);
 
             return !batalla.EsFinalizada;
         }
-
+        
         public Personaje EjecutarCombateCompleto(Batalla batalla)
         {
             if (batalla == null) throw new ArgumentNullException(nameof(batalla));

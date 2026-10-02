@@ -37,5 +37,10 @@ namespace Tests
         public bool Actualizar(Batalla entidad) => true;
         public bool Eliminar(int id) => true;
         public IEnumerable<Batalla> ObtenerBatallasActivas() => _batallas.Where(b => !b.EsFinalizada);
+        public List<(int BatallaId, int Turno, int AtacanteId, int DefensorId, int Dano)> HistorialRegistrado { get; } = new();
+        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado)
+        {
+            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoCausado));
+        }
     }
 }

@@ -7,6 +7,7 @@ namespace Persistencia.Entidades
         private Personaje _combatiente1;
         private Personaje _combatiente2;
         private int _numeroTurno;
+        public int Id { get; set; }
 
         public Personaje Combatiente1
         {
