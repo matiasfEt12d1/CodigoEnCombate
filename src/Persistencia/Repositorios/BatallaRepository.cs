@@ -70,7 +70,11 @@ namespace Persistencia.Repositorios
         public bool Actualizar(Batalla entidad)
         {
             const string sql = "UPDATE Batallas SET numero_turno = @NumeroTurno, es_finalizada = @EsFinalizada WHERE id = @Id";
-            return _context.Execute(sql, new { entidad.NumeroTurno, entidad.EsFinalizada }) > 0;
+            int id = _context.QueryFirst<int>(
+                "SELECT id FROM Batallas WHERE combatiente1_id = (SELECT id FROM Personajes WHERE nombre = @c1) AND combatiente2_id = (SELECT id FROM Personajes WHERE nombre = @c2) AND es_finalizada = 0",
+                new { c1 = entidad.Combatiente1.Nombre, c2 = entidad.Combatiente2.Nombre }
+            );
+            return _context.Execute(sql, new { Id = id, entidad.NumeroTurno, entidad.EsFinalizada }) > 0;
         }
 
         public bool Eliminar(int id)
