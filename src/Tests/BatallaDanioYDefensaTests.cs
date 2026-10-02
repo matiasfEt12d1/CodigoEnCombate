@@ -6,37 +6,59 @@ namespace Tests
 {
     public class BatallaDanioYDefensaTests
     {
-        [Fact]
-        public void EjecutarTurno_AtaqueBaseReducidoPorDefensa_RestaVidaCorrectamente()
+        [Theory]
+        [InlineData(25, 10, 100, 85)]  // Caso normal
+        [InlineData(30, 5, 100, 75)]   // Caso normal con mayor ataque
+        [InlineData(10, 15, 100, 99)]  // Caso límite: defensa mayor al ataque (aplica daño mínimo 1)
+        public void EjecutarTurno_AtaqueBaseReducidoPorDefensa_RestaVidaCorrectamente(
+            int ataque, int defensa, int vidaInicial, int vidaEsperada)
         {
             // Arrange
-            var service = new BatallaService(new FakeBatallaRepository(), new FakePersonajeRepository());
-            var atacante = new Guerrero("Atacante", 100, 25, 5, 0);
-            var defensor = new Guerrero("Defensor", 100, 10, 10, 0);
+            var personajeRepo = new FakePersonajeRepository();
+            var batallaRepo = new FakeBatallaRepository();
+            var service = new BatallaService(batallaRepo, personajeRepo);
+
+            var atacante = new Guerrero("Atacante", 100, ataque, 5, 0);
+            var defensor = new Guerrero("Defensor", vidaInicial, 10, defensa, 0);
+
+            personajeRepo.Agregar(atacante);
+            personajeRepo.Agregar(defensor);
+
             var batalla = service.CrearBatalla(atacante, defensor);
 
             // Act
             service.EjecutarTurno(batalla);
 
-            // Assert (Daño = 25 - 10 = 15; Vida esperada = 85)
-            Assert.Equal(85, defensor.Vida);
+            // Assert
+            Assert.Equal(vidaEsperada, defensor.Vida);
         }
 
-        [Fact]
-        public void EjecutarTurno_AtaqueAGuerreroConEscudo_AbsorbeDanioEnEscudoAntesDeVida()
+        [Theory]
+        [InlineData(20, 5, 10, 100, 0, 95)]  // Escudo absorbido completamente
+        [InlineData(12, 5, 10, 100, 3, 100)] // Escudo absorbido parcialmente (sin daño a vida)
+        [InlineData(35, 5, 10, 100, 0, 80)]  // Ataque alto rompe escudo y resta vida
+        public void EjecutarTurno_AtaqueAGuerreroConEscudo_AbsorbeDanioEnEscudoAntesDeVida(
+            int ataque, int defensa, int escudoInicial, int vidaInicial, int escudoEsperado, int vidaEsperada)
         {
             // Arrange
-            var service = new BatallaService(new FakeBatallaRepository(), new FakePersonajeRepository());
-            var atacante = new Guerrero("Atacante", 100, 20, 0, 0);
-            var defensor = new Guerrero("GuerreroEscudo", 100, 10, 5, 10);
+            var personajeRepo = new FakePersonajeRepository();
+            var batallaRepo = new FakeBatallaRepository();
+            var service = new BatallaService(batallaRepo, personajeRepo);
+
+            var atacante = new Guerrero("Atacante", 100, ataque, 0, 0);
+            var defensor = new Guerrero("GuerreroEscudo", vidaInicial, 10, defensa, escudoInicial);
+
+            personajeRepo.Agregar(atacante);
+            personajeRepo.Agregar(defensor);
+
             var batalla = service.CrearBatalla(atacante, defensor);
 
             // Act
             service.EjecutarTurno(batalla);
 
-            // Assert (Daño = 20 - 5 = 15; Escudo absorbe 10 y pasa a 0; Restante 5 a Vida = 95)
-            Assert.Equal(0, defensor.Escudo);
-            Assert.Equal(95, defensor.Vida);
+            // Assert
+            Assert.Equal(escudoEsperado, defensor.Escudo);
+            Assert.Equal(vidaEsperada, defensor.Vida);
         }
     }
 }

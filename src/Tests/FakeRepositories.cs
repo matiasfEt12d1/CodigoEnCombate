@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Persistencia.Entidades;
@@ -9,17 +10,19 @@ namespace Tests
     {
         private readonly List<Personaje> _personajes = new();
 
-        public Personaje? ObtenerPorId(int id) => _personajes.FirstOrDefault();
+        public Personaje? ObtenerPorId(int id) => _personajes.FirstOrDefault(p => p.Id == id);
         public IEnumerable<Personaje> ObtenerTodos() => _personajes;
         public int Agregar(Personaje entidad)
         {
+            entidad.Id = _personajes.Count + 1;
             _personajes.Add(entidad);
-            return _personajes.Count;
+            return entidad.Id;
         }
         public bool Actualizar(Personaje entidad) => true;
         public bool Eliminar(int id) => true;
         public Personaje? ObtenerPorNombre(string nombre) => _personajes.FirstOrDefault(p => p.Nombre == nombre);
-        public IEnumerable<Personaje> ObtenerPorTipo(string tipo) => _personajes;
+        public IEnumerable<Personaje> ObtenerPorTipo(string tipo) => 
+            _personajes.Where(p => p.GetType().Name.Equals(tipo, StringComparison.OrdinalIgnoreCase));
         public bool AgregarHabilidad(int personajeId, Habilidad habilidad) => true;
     }
 
@@ -27,12 +30,13 @@ namespace Tests
     {
         private readonly List<Batalla> _batallas = new();
 
-        public Batalla? ObtenerPorId(int id) => _batallas.FirstOrDefault();
+        public Batalla? ObtenerPorId(int id) => _batallas.FirstOrDefault(b => b.Id == id);
         public IEnumerable<Batalla> ObtenerTodos() => _batallas;
         public int Agregar(Batalla entidad)
         {
+            entidad.Id = _batallas.Count + 1;
             _batallas.Add(entidad);
-            return _batallas.Count;
+            return entidad.Id;
         }
         public bool Actualizar(Batalla entidad) => true;
         public bool Eliminar(int id) => true;
