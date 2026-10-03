@@ -52,21 +52,31 @@ namespace Aplicacion.Servicios
             var p2 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente2.Nombre) 
                     ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente2.Nombre}' en la BD.");
 
+            // Obtiene la primera habilidad asignada o asigna "Ataque Básico" si no tiene ninguna
+            string habilidadP1 = batalla.Combatiente1.Habilidades.Count > 0 
+                ? batalla.Combatiente1.Habilidades[0].Nombre 
+                : "Ataque Básico";
+
             // 1. Ataque Combatiente 1 -> Combatiente 2
             int vidaAntesP2 = batalla.Combatiente2.Vida;
             batalla.Combatiente1.Atacar(batalla.Combatiente2);
             int danoP1 = Math.Max(0, vidaAntesP2 - batalla.Combatiente2.Vida);
 
-            _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p1.Id, p2.Id, null, danoP1);
+            // Registra el turno enviando el nombre de la habilidad
+            _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p1.Id, p2.Id, habilidadP1, danoP1);
 
             // 2. Contraataque Combatiente 2 -> Combatiente 1 (si sigue vivo)
             if (batalla.Combatiente2.EstaVivo)
             {
+                string habilidadP2 = batalla.Combatiente2.Habilidades.Count > 0 
+                    ? batalla.Combatiente2.Habilidades[0].Nombre 
+                    : "Ataque Básico";
+
                 int vidaAntesP1 = batalla.Combatiente1.Vida;
                 batalla.Combatiente2.Atacar(batalla.Combatiente1);
                 int danoP2 = Math.Max(0, vidaAntesP1 - batalla.Combatiente1.Vida);
 
-                _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p2.Id, p1.Id, null, danoP2);
+                _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p2.Id, p1.Id, habilidadP2, danoP2);
             }
 
             batalla.NumeroTurno++;
