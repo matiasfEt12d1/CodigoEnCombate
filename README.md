@@ -8,18 +8,15 @@
 
 Simulador de batallas por turnos desarrollado en **.NET 8.0 con C#**, aplicando arquitectura por capas, principios de Programación Orientada a Objetos (Herencia, Polimorfismo, Encapsulamiento) y persistencia en **MySQL** utilizando **Dapper** y **MySqlConnector**.
 
-Hecho mediante un plan de aprendizaje de la especialidad "Computación" del segundo bimestre, cursando 5to año en una escuela técnica de la Ciudad Autónoma de Buenos Aires, Argentina.
+Hecho mediante un plan de aprendizaje nivel 2, de la especialidad "Computación" del 3er bimestre, cursando 5to año en una escuela técnica de la Ciudad Autónoma de Buenos Aires, Argentina.
 
 ---
 
 ## Estructura del Proyecto
 
 ```text
-codigo-en-combate/
+CodigoEnCombate/
 ├── scripts/
-│   ├── tables/
-│   ├── stored_procedures/
-│   └── views/
 ├── src/
 │   ├── Aplicacion/
 │   │   ├── Interfaces/
@@ -28,17 +25,18 @@ codigo-en-combate/
 │   │   ├── Entidades/
 │   │   └── Repositorios/
 │   └── Tests/
-│       └── FakeRepositories.cs
-├── CódigoEnCombate.sln
+├── Proyecto.sln
 ├── .gitignore
 └── README.md
 ```
 
+---
+
 ### Proyectos de la Solución
 
-- **`Aplicacion`**: Contiene la lógica de negocio, servicios (`BatallaService`, `PersonajeService`, `EstadisticasService`) e interfaces de contratos.
+- **`Aplicacion`**: Contiene la lógica de negocio, servicios (`BatallaService`, `PersonajeService`, `EstadisticasService`) e interfaces.
 - **`Persistencia`**: Contiene el modelo de dominio (`Personaje`, `Guerrero`, `Mago`, `Arquero`, `Asesino`, `Batalla`, `Habilidad`), el contexto de Dapper y la implementación de los repositorios con MySQL.
-- **`Tests`**: Suite de pruebas unitarias implementadas con **xUnit** utilizando repositorios simulados (*fakes*).
+- **`Tests`**: Suite de pruebas unitarias implementadas con **xUnit** utilizando repositorios simulados y Theory para la cobertura.
 
 ---
 
@@ -58,6 +56,7 @@ Tests -> Persistencia
 ![.NET](https://img.shields.io/badge/Framework-.NET%208.0-purple)
 ![MySQL](https://img.shields.io/badge/Database-MySQL-violet)
 
+
 ### Requisitos
 
 | Nombre | Versión | Descripción |
@@ -70,6 +69,8 @@ Tests -> Persistencia
 | Microsoft.Extensions.Configuration.Json | `10.0.12` | Lectura de ajustes desde `appsettings.json` |
 | Microsoft.Extensions.DependencyInjection | `10.0.12` | Contenedor para inyección de dependencias |
 
+---
+
 ### Clonar e Instalar
 
 ```bash
@@ -78,6 +79,7 @@ cd codigo-en-combate
 dotnet restore
 ```
 
+---
 
 ### Configuración de la Aplicación
 
