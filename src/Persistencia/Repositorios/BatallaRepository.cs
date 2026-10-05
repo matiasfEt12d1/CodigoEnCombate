@@ -54,20 +54,20 @@ namespace Persistencia.Repositorios
 
         public int Agregar(Batalla entidad)
         {
-            const string sql = @"
-                INSERT INTO Batallas (combatiente1_id, combatiente2_id, numero_turno, es_finalizada)
-                VALUES (@Combatiente1Id, @Combatiente2Id, @NumeroTurno, @EsFinalizada);
-                SELECT LAST_INSERT_ID();";
+            int c1Id = entidad.Combatiente1.Id > 0 
+                ? entidad.Combatiente1.Id 
+                : _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente1.Nombre });
 
-            var c1Id = _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente1.Nombre });
-            var c2Id = _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente2.Nombre });
+            int c2Id = entidad.Combatiente2.Id > 0 
+                ? entidad.Combatiente2.Id 
+                : _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente2.Nombre });
+
+            const string sql = "CALL sp_RegistrarBatalla(@p_combatiente1_id, @p_combatiente2_id);";
 
             int idGenerado = _context.QueryFirst<int>(sql, new
             {
-                Combatiente1Id = c1Id,
-                Combatiente2Id = c2Id,
-                entidad.NumeroTurno,
-                entidad.EsFinalizada
+                p_combatiente1_id = c1Id,
+                p_combatiente2_id = c2Id
             });
 
             entidad.Id = idGenerado;
@@ -96,20 +96,69 @@ namespace Persistencia.Repositorios
             return _context.Execute(sql, new { Id = id }) > 0;
         }
 
-        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado)
-{
-            const string sql = @"
-                INSERT INTO historialbatallas (batalla_id, numero_turno, atacante_id, defensor_id, habilidad_usada, dano_causado, fecha_registro)
-                VALUES (@BatallaId, @NumeroTurno, @AtacanteId, @DefensorId, @HabilidadUsada, @DanoCausado, NOW())";
+        public bool FinalizarBatalla(int batallaId, int? ganadorId, int numeroTurno, int vidaC1, int vidaC2)
+        {
+            const string sql = "CALL sp_FinalizarBatalla(@p_batalla_id, @p_ganador_id, @p_numero_turno, @p_vida_c1, @p_vida_c2);";
+
+            return _context.Execute(sql, new
+            {
+                p_batalla_id = batallaId,
+                p_ganador_id = ganadorId,
+                p_numero_turno = numeroTurno,
+                p_vida_c1 = vidaC1,
+                p_vida_c2 = vidaC2
+            }) > 0;
+        }
+
+        public void ProcesarAccionCombate(int batallaId, int atacanteId, int defensorId, int danoRealizado, int nuevaVidaDefensor, string? habilidadUsada, int numeroTurno)
+        {
+            const string sql = @"CALL sp_ProcesarAccionCombate(
+                @p_batalla_id, 
+                @p_atacante_id, 
+                @p_defensor_id, 
+                @p_dano_realizado, 
+                @p_nueva_vida_defensor, 
+                @p_habilidad_usada, 
+                @p_numero_turno
+            );";
 
             _context.Execute(sql, new
             {
-                BatallaId = batallaId,
-                NumeroTurno = numeroTurno,
-                AtacanteId = atacanteId,
-                DefensorId = defensorId,
-                HabilidadUsada = habilidadUsada,
-                DanoCausado = danoCausado
+                p_batalla_id = batallaId,
+                p_atacante_id = atacanteId,
+                p_defensor_id = defensorId,
+                p_dano_realizado = danoRealizado,
+                p_nueva_vida_defensor = nuevaVidaDefensor,
+                p_habilidad_usada = habilidadUsada,
+                p_numero_turno = numeroTurno
+            });
+            //TODO ¿Qué pasa si falla algo arriba?
+        }
+
+        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado, int nuevaVidaDefensor)
+        {
+            ProcesarAccionCombate(batallaId, atacanteId, defensorId, danoCausado, nuevaVidaDefensor, habilidadUsada, numeroTurno);
+        }
+
+        public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql = "CALL sp_ObtenerRankingPorTipoPersonaje(@p_fecha_desde, @p_fecha_hasta);";
+
+            return _context.Query<RankingTipoPersonajeDto>(sql, new
+            {
+                p_fecha_desde = fechaDesde,
+                p_fecha_hasta = fechaHasta
+            });
+        }
+
+        public IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql = "CALL sp_GenerarReporteBatallasDetallado(@p_fecha_desde, @p_fecha_hasta);";
+
+            return _context.Query<ReporteBatallaDetalladoDto>(sql, new
+            {
+                p_fecha_desde = fechaDesde,
+                p_fecha_hasta = fechaHasta
             });
         }
 
@@ -121,5 +170,28 @@ namespace Persistencia.Repositorios
             public int NumeroTurno { get; set; }
             public bool EsFinalizada { get; set; }
         }
+    }
+
+    public class RankingTipoPersonajeDto
+    {
+        public string TipoPersonaje { get; set; } = string.Empty;
+        public int TotalBatallas { get; set; }
+        public int TotalVictorias { get; set; }
+        public int TotalDerrotas { get; set; }
+        public decimal DanoPromedioPorAccion { get; set; }
+    }
+
+    public class ReporteBatallaDetalladoDto
+    {
+        public int BatallaId { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public int TurnosTotales { get; set; }
+        public bool Finalizada { get; set; }
+        public string Combatiente1_Nombre { get; set; } = string.Empty;
+        public string Combatiente1_Tipo { get; set; } = string.Empty;
+        public string Combatiente2_Nombre { get; set; } = string.Empty;
+        public string Combatiente2_Tipo { get; set; } = string.Empty;
+        public string Ganador_Nombre { get; set; } = string.Empty;
+        public string Ganador_Tipo { get; set; } = string.Empty;
     }
 }
