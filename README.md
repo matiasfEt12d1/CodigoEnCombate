@@ -6,7 +6,7 @@
 
 # Código en combate
 
-Simulador de batallas por turnos desarrollado en **.NET 8.0 con C#**, aplicando arquitectura por capas, principios de Programación Orientada a Objetos (Herencia, Polimorfismo, Encapsulamiento) y persistencia en **MySQL** utilizando **Dapper** y **MySqlConnector**.
+Simulador de batallas por turnos desarrollado en **.NET 10 con C#**, aplicando arquitectura por capas, principios de Programación Orientada a Objetos (Herencia, Polimorfismo, Encapsulamiento) y persistencia en **MySQL** utilizando **Dapper** y **MySqlConnector**.
 
 Hecho mediante un plan de aprendizaje nivel 2, de la especialidad "Computación" del 3er bimestre, cursando 5to año en una escuela técnica de la Ciudad Autónoma de Buenos Aires, Argentina.
 
@@ -61,7 +61,7 @@ Tests -> Persistencia
 
 | Nombre | Versión | Descripción |
 | :--- | :---: | :--- |
-| .NET SDK | `8.0` | Entorno de ejecución, compilación y testing |
+| .NET SDK | `10.0` | Entorno de ejecución, compilación y testing |
 | MySQL | `8.0` | Motor de base de datos relacional |
 | Dapper | `2.1.89` | Micro-ORM síncrono para mapeo de datos |
 | MySqlConnector | `2.6.2` | Driver para conexión con MySQL |
