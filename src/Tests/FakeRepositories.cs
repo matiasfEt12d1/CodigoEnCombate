@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Persistencia.Entidades;
 using Persistencia.Repositorios;
 
@@ -41,10 +38,37 @@ namespace Tests
         public bool Actualizar(Batalla entidad) => true;
         public bool Eliminar(int id) => true;
         public IEnumerable<Batalla> ObtenerBatallasActivas() => _batallas.Where(b => !b.EsFinalizada);
-        public List<(int BatallaId, int Turno, int AtacanteId, int DefensorId, int Dano)> HistorialRegistrado { get; } = new();
-        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado)
+        
+        public List<(int BatallaId, int Turno, int AtacanteId, int DefensorId, int Dano, string? Habilidad)> HistorialRegistrado { get; } = new();
+
+        public bool FinalizarBatalla(int batallaId, int? ganadorId, int numeroTurno, int vidaC1, int vidaC2)
         {
-            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoCausado));
+            var batalla = ObtenerPorId(batallaId);
+            if (batalla != null)
+            {
+                _batallas.Remove(batalla);
+            }
+            return true;
+        }
+
+        public void ProcesarAccionCombate(int batallaId, int atacanteId, int defensorId, int danoRealizado, int nuevaVidaDefensor, string? habilidadUsada, int numeroTurno)
+        {
+            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoRealizado, habilidadUsada));
+        }
+
+        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado, int nuevaVidaDefensor)
+        {
+            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoCausado, habilidadUsada));
+        }
+
+        public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            return Enumerable.Empty<RankingTipoPersonajeDto>();
+        }
+
+        public IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            return Enumerable.Empty<ReporteBatallaDetalladoDto>();
         }
     }
 }

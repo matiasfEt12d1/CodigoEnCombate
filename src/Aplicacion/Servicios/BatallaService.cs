@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Aplicacion.Interfaces;
 using Persistencia.Entidades;
 using Persistencia.Repositorios;
@@ -52,7 +55,6 @@ namespace Aplicacion.Servicios
             var p2 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente2.Nombre) 
                     ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente2.Nombre}' en la BD.");
 
-            // Obtiene la primera habilidad asignada o asigna "Ataque Básico" si no tiene ninguna
             string habilidadP1 = batalla.Combatiente1.Habilidades.Count > 0 
                 ? batalla.Combatiente1.Habilidades[0].Nombre 
                 : "Ataque Básico";
@@ -62,8 +64,15 @@ namespace Aplicacion.Servicios
             batalla.Combatiente1.Atacar(batalla.Combatiente2);
             int danoP1 = Math.Max(0, vidaAntesP2 - batalla.Combatiente2.Vida);
 
-            // Registra el turno enviando el nombre de la habilidad
-            _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p1.Id, p2.Id, habilidadP1, danoP1);
+            _batallaRepository.ProcesarAccionCombate(
+                batalla.Id, 
+                p1.Id, 
+                p2.Id, 
+                danoP1, 
+                batalla.Combatiente2.Vida, 
+                habilidadP1, 
+                batalla.NumeroTurno
+            );
 
             // 2. Contraataque Combatiente 2 -> Combatiente 1 (si sigue vivo)
             if (batalla.Combatiente2.EstaVivo)
@@ -76,15 +85,32 @@ namespace Aplicacion.Servicios
                 batalla.Combatiente2.Atacar(batalla.Combatiente1);
                 int danoP2 = Math.Max(0, vidaAntesP1 - batalla.Combatiente1.Vida);
 
-                _batallaRepository.RegistrarHistorialTurno(batalla.Id, batalla.NumeroTurno, p2.Id, p1.Id, habilidadP2, danoP2);
+                _batallaRepository.ProcesarAccionCombate(
+                    batalla.Id, 
+                    p2.Id, 
+                    p1.Id, 
+                    danoP2, 
+                    batalla.Combatiente1.Vida, 
+                    habilidadP2, 
+                    batalla.NumeroTurno
+                );
             }
 
-            batalla.NumeroTurno++;
-
-            // Persiste el estado actualizado de la batalla y de los personajes
+            // Actualizar recursos de los personajes en la BD (maná, escudo, etc.)
             _personajeRepository.Actualizar(batalla.Combatiente1);
             _personajeRepository.Actualizar(batalla.Combatiente2);
-            _batallaRepository.Actualizar(batalla);
+
+            // Si un combatiente muere, EsFinalizada se evalúa automáticamente como true en el modelo de Dominio
+            if (batalla.EsFinalizada)
+            {
+                int? ganadorId = batalla.Combatiente1.EstaVivo ? p1.Id : (batalla.Combatiente2.EstaVivo ? p2.Id : null);
+                _batallaRepository.FinalizarBatalla(batalla.Id, ganadorId, batalla.NumeroTurno, batalla.Combatiente1.Vida, batalla.Combatiente2.Vida);
+            }
+            else
+            {
+                batalla.NumeroTurno++;
+                _batallaRepository.Actualizar(batalla);
+            }
 
             return !batalla.EsFinalizada;
         }
