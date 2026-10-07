@@ -8,7 +8,6 @@ DROP PROCEDURE IF EXISTS sp_GenerarReporteBatallasDetallado;
 
 DELIMITER //
 
--- Registrar una batalla completa con sus participantes y estado inicial
 CREATE PROCEDURE sp_RegistrarBatalla (
     IN p_combatiente1_id INT,
     IN p_combatiente2_id INT
@@ -17,19 +16,19 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
+        RESIGNAL;
     END;
 
     START TRANSACTION;
 
-    INSERT INTO Batallas (combatiente1_id, combatiente2_id, numero_turno, es_finalizada, fecha_inicio)
-    VALUES (p_combatiente1_id, p_combatiente2_id, 1, FALSE, NOW());
+        INSERT INTO Batallas (combatiente1_id, combatiente2_id, numero_turno, es_finalizada, fecha_inicio)
+        VALUES (p_combatiente1_id, p_combatiente2_id, 1, FALSE, NOW());
 
-    SELECT LAST_INSERT_ID() AS BatallaId;
+        SELECT LAST_INSERT_ID() AS BatallaId;
 
     COMMIT;
 END //
 
--- Cerrar una batalla actualizando resultado, estadísticas e historial
 CREATE PROCEDURE sp_FinalizarBatalla (
     IN p_batalla_id INT,
     IN p_ganador_id INT,
@@ -41,18 +40,17 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
+        RESIGNAL;
     END;
 
     START TRANSACTION;
 
-    -- Actualizar estado de la batalla
     UPDATE Batallas
     SET ganador_id = p_ganador_id,
         numero_turno = p_numero_turno,
         es_finalizada = TRUE
     WHERE id = p_batalla_id;
 
-    -- Actualizar la vida final de ambos combatientes
     UPDATE Personajes P
     INNER JOIN Batallas B ON B.id = p_batalla_id
     SET P.vida = CASE 
@@ -65,7 +63,6 @@ BEGIN
     COMMIT;
 END //
 
--- Procesar operaciones transaccionales que afecten varias entidades relacionadas
 CREATE PROCEDURE sp_ProcesarAccionCombate (
     IN p_batalla_id INT,
     IN p_atacante_id INT,
@@ -79,28 +76,25 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
+        RESIGNAL;
     END;
 
     START TRANSACTION;
 
-    -- Insertar el evento en el historial de combate
-    INSERT INTO HistorialBatallas (batalla_id, numero_turno, atacante_id, defensor_id, habilidad_usada, dano_causado, fecha_registro)
-    VALUES (p_batalla_id, p_numero_turno, p_atacante_id, p_defensor_id, p_habilidad_usada, p_dano_realizado, NOW());
+        INSERT INTO HistorialBatallas (batalla_id, numero_turno, atacante_id, defensor_id, habilidad_usada, dano_causado, fecha_registro)
+        VALUES (p_batalla_id, p_numero_turno, p_atacante_id, p_defensor_id, p_habilidad_usada, p_dano_realizado, NOW());
 
-    -- Actualizar estado del defensor
-    UPDATE Personajes
-    SET vida = p_nueva_vida_defensor
-    WHERE id = p_defensor_id;
+        UPDATE Personajes
+        SET vida = p_nueva_vida_defensor
+        WHERE id = p_defensor_id;
 
-    -- Actualizar el turno actual en la batalla
-    UPDATE Batallas
-    SET numero_turno = p_numero_turno
-    WHERE id = p_batalla_id;
+        UPDATE Batallas
+        SET numero_turno = p_numero_turno
+        WHERE id = p_batalla_id;
 
     COMMIT;
 END //
 
--- Obtener rankings o estadísticas agregadas por período y tipo de personaje
 CREATE PROCEDURE sp_ObtenerRankingPorTipoPersonaje (
     IN p_fecha_desde DATETIME,
     IN p_fecha_hasta DATETIME
@@ -123,7 +117,6 @@ BEGIN
     ORDER BY TotalVictorias DESC, DanoPromedioPorAccion DESC;
 END //
 
--- Generar reportes combinando batallas, participantes y resultados
 CREATE PROCEDURE sp_GenerarReporteBatallasDetallado (
     IN p_fecha_desde DATETIME,
     IN p_fecha_hasta DATETIME
