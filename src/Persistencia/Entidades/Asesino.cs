@@ -30,5 +30,14 @@ namespace Persistencia.Entidades
             int danio = Math.Max(1, ataqueEfectivo - objetivo.Defensa);
             objetivo.RecibirDanio(danio);
         }
+
+        // Golpe sigiloso: crítico garantizado, sin depender de la probabilidad.
+        public override void UsarHabilidad(Personaje objetivo)
+        {
+            ValidarPuedeActuar(objetivo);
+
+            int danio = Math.Max(1, (Ataque * 2) - objetivo.Defensa);
+            objetivo.RecibirDanio(danio);
+        }
     }
 }

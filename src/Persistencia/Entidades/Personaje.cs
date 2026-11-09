@@ -88,5 +88,13 @@ namespace Persistencia.Entidades
             if (cantidad < 0) return;
             Vida -= cantidad;
         }
+
+        public abstract void UsarHabilidad(Personaje objetivo);
+
+        protected void ValidarPuedeActuar(Personaje objetivo)
+        {
+            if (objetivo == null) throw new ArgumentNullException(nameof(objetivo));
+            if (!EstaVivo) throw new InvalidOperationException("Un personaje derrotado no puede actuar.");
+        }
     }
 }

@@ -4,6 +4,8 @@ namespace Persistencia.Entidades
 {
     public class Mago : Personaje
     {
+        public const int CostoBolaDeFuego = 25;
+
         private int _manaMax;
         private int _mana;
 
@@ -47,6 +49,17 @@ namespace Persistencia.Entidades
 
             int danioTotal = Math.Max(1, (Ataque + danioExtra) - objetivo.Defensa);
             objetivo.RecibirDanio(danioTotal);
+        }
+
+        // Bola de fuego: consume maná y hace el doble de ataque ignorando la defensa.
+        public override void UsarHabilidad(Personaje objetivo)
+        {
+            ValidarPuedeActuar(objetivo);
+            if (Mana < CostoBolaDeFuego)
+                throw new InvalidOperationException("Maná insuficiente para lanzar Bola de fuego.");
+
+            Mana -= CostoBolaDeFuego;
+            objetivo.RecibirDanio(Ataque * 2);
         }
     }
 }

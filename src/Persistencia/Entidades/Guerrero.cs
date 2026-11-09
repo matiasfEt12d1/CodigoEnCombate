@@ -37,5 +37,15 @@ namespace Persistencia.Entidades
 
             base.RecibirDanio(cantidad);
         }
+
+        // Embestida: descarga todo el escudo como daño adicional.
+        public override void UsarHabilidad(Personaje objetivo)
+        {
+            ValidarPuedeActuar(objetivo);
+
+            int danio = Math.Max(1, (Ataque + Escudo) - objetivo.Defensa);
+            Escudo = 0;
+            objetivo.RecibirDanio(danio);
+        }
     }
 }
