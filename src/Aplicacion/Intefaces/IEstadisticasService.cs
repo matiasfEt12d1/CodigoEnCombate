@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using Aplicacion;
+using Persistencia.Repositorios;
 
 namespace Aplicacion.Interfaces
 {
@@ -7,5 +6,10 @@ namespace Aplicacion.Interfaces
     {
         ResumenEstadisticas ObtenerResumenEstadisticas();
         IEnumerable<string> ObtenerRankingPersonajes();
+        IEnumerable<ResumenBatallasPeriodoTipoDto> ObtenerResumenBatallasPorPeriodoYTipo(DateTime fechaDesde, DateTime fechaHasta);
+        IEnumerable<VictoriasDerrotasTipoPeriodoDto> ObtenerVictoriasYDerrotasPorTipoYPeriodo(DateTime fechaDesde, DateTime fechaHasta);
+        IEnumerable<RankingPersonajeEfectividadDto> ObtenerRankingPersonajesEfectividad();
+        IEnumerable<DanoPromedioClaseHabilidadDto> ObtenerDanoPromedioPorClaseYHabilidad();
+        IEnumerable<DanoTotalPorPeriodoDto> ObtenerDanoTotalRealizadoYRecibidoPorPeriodo(DateTime fechaDesde, DateTime fechaHasta);
     }
 }

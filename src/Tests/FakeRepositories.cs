@@ -71,4 +71,31 @@ namespace Tests
             return Enumerable.Empty<ReporteBatallaDetalladoDto>();
         }
     }
+
+    public class FakeEstadisticasRepository : IEstadisticasRepository
+    {
+        public virtual IEnumerable<ResumenBatallasPeriodoTipoDto> ObtenerResumenBatallasPorPeriodoYTipo(DateTime fechaDesde, DateTime fechaHasta)
+            => Enumerable.Empty<ResumenBatallasPeriodoTipoDto>();
+
+        public virtual IEnumerable<VictoriasDerrotasTipoPeriodoDto> ObtenerVictoriasYDerrotasPorTipoYPeriodo(DateTime fechaDesde, DateTime fechaHasta)
+            => Enumerable.Empty<VictoriasDerrotasTipoPeriodoDto>();
+
+        public virtual IEnumerable<RankingPersonajeEfectividadDto> ObtenerRankingPersonajesEfectividad()
+            => Enumerable.Empty<RankingPersonajeEfectividadDto>();
+
+        public virtual IEnumerable<DanoPromedioClaseHabilidadDto> ObtenerDanoPromedioPorClaseYHabilidad()
+            => Enumerable.Empty<DanoPromedioClaseHabilidadDto>();
+
+        public virtual IEnumerable<DanoTotalPorPeriodoDto> ObtenerDanoTotalRealizadoYRecibidoPorPeriodo(DateTime fechaDesde, DateTime fechaHasta)
+            => Enumerable.Empty<DanoTotalPorPeriodoDto>();
+
+        public virtual IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+            => Enumerable.Empty<RankingTipoPersonajeDto>();
+
+        public virtual IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
+            => Enumerable.Empty<ReporteBatallaDetalladoDto>();
+
+        public virtual ResumenGeneralBatallasDto ObtenerResumenGeneralBatallas()
+            => new ResumenGeneralBatallasDto();
+    }
 }
