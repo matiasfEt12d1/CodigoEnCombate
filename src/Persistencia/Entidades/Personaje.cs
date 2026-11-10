@@ -6,7 +6,7 @@ namespace Persistencia.Entidades
     public abstract class Personaje
     {
         public int Id { get; set; }
-        private string _nombre;
+        private string _nombre = string.Empty;
         private int _vidaMax;
         private int _vida;
         private int _ataque;

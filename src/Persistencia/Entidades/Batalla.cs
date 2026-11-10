@@ -4,8 +4,8 @@ namespace Persistencia.Entidades
 {
     public class Batalla
     {
-        private Personaje _combatiente1;
-        private Personaje _combatiente2;
+        private Personaje _combatiente1 = null!;
+        private Personaje _combatiente2 = null!;
         private int _numeroTurno;
         public int Id { get; set; }
 

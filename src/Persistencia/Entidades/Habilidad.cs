@@ -4,7 +4,7 @@ namespace Persistencia.Entidades
 {
     public class Habilidad
     {
-        private string _nombre;
+        private string _nombre = string.Empty;
         private int _costoRecurso;
         private int _potencia;
 
