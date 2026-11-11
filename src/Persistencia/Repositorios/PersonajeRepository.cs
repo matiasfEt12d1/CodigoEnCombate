@@ -26,13 +26,13 @@ namespace Persistencia.Repositorios
             var personaje = MapearEntidad(dto);
 
             const string sqlHabilidades = @"
-                SELECT nombre AS Nombre, costo_recurso AS CostoRecurso, potencia AS Potencia 
+                SELECT id AS Id, nombre AS Nombre, costo_recurso AS CostoRecurso, potencia AS Potencia
                 FROM Habilidades WHERE personaje_id = @Id";
 
             var habilidades = _context.Query<HabilidadDto>(sqlHabilidades, new { Id = id });
             foreach (var h in habilidades)
             {
-                personaje.AgregarHabilidad(new Habilidad(h.Nombre, h.CostoRecurso, h.Potencia));
+                personaje.AgregarHabilidad(new Habilidad(h.Nombre, h.CostoRecurso, h.Potencia) { Id = h.Id });
             }
 
             return personaje;
@@ -156,6 +156,7 @@ namespace Persistencia.Repositorios
 
         private class HabilidadDto
         {
+            public int Id { get; set; }
             public string Nombre { get; set; } = string.Empty;
             public int CostoRecurso { get; set; }
             public int Potencia { get; set; }

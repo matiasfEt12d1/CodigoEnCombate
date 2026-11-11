@@ -69,7 +69,7 @@ CREATE PROCEDURE sp_ProcesarAccionCombate (
     IN p_defensor_id INT,
     IN p_dano_realizado INT,
     IN p_nueva_vida_defensor INT,
-    IN p_habilidad_usada VARCHAR(100),
+    IN p_habilidad_id INT,
     IN p_numero_turno INT
 )
 BEGIN
@@ -81,8 +81,8 @@ BEGIN
 
     START TRANSACTION;
 
-        INSERT INTO HistorialBatallas (batalla_id, numero_turno, atacante_id, defensor_id, habilidad_usada, dano_causado, fecha_registro)
-        VALUES (p_batalla_id, p_numero_turno, p_atacante_id, p_defensor_id, p_habilidad_usada, p_dano_realizado, NOW());
+        INSERT INTO HistorialBatallas (batalla_id, numero_turno, atacante_id, defensor_id, habilidad_id, dano_causado, fecha_registro)
+        VALUES (p_batalla_id, p_numero_turno, p_atacante_id, p_defensor_id, p_habilidad_id, p_dano_realizado, NOW());
 
         UPDATE Personajes
         SET vida = p_nueva_vida_defensor

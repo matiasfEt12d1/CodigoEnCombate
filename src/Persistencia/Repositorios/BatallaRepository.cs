@@ -110,15 +110,15 @@ namespace Persistencia.Repositorios
             }) > 0;
         }
 
-        public void ProcesarAccionCombate(int batallaId, int atacanteId, int defensorId, int danoRealizado, int nuevaVidaDefensor, string? habilidadUsada, int numeroTurno)
+        public void ProcesarAccionCombate(int batallaId, int atacanteId, int defensorId, int danoRealizado, int nuevaVidaDefensor, int? habilidadId, int numeroTurno)
         {
             const string sql = @"CALL sp_ProcesarAccionCombate(
-                @p_batalla_id, 
-                @p_atacante_id, 
-                @p_defensor_id, 
-                @p_dano_realizado, 
-                @p_nueva_vida_defensor, 
-                @p_habilidad_usada, 
+                @p_batalla_id,
+                @p_atacante_id,
+                @p_defensor_id,
+                @p_dano_realizado,
+                @p_nueva_vida_defensor,
+                @p_habilidad_id,
                 @p_numero_turno
             );";
 
@@ -129,15 +129,15 @@ namespace Persistencia.Repositorios
                 p_defensor_id = defensorId,
                 p_dano_realizado = danoRealizado,
                 p_nueva_vida_defensor = nuevaVidaDefensor,
-                p_habilidad_usada = habilidadUsada,
+                p_habilidad_id = habilidadId,
                 p_numero_turno = numeroTurno
             });
             //TODO ¿Qué pasa si falla algo arriba?
         }
 
-        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado, int nuevaVidaDefensor)
+        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, int? habilidadId, int danoCausado, int nuevaVidaDefensor)
         {
-            ProcesarAccionCombate(batallaId, atacanteId, defensorId, danoCausado, nuevaVidaDefensor, habilidadUsada, numeroTurno);
+            ProcesarAccionCombate(batallaId, atacanteId, defensorId, danoCausado, nuevaVidaDefensor, habilidadId, numeroTurno);
         }
 
         public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)

@@ -39,7 +39,7 @@ namespace Tests
         public bool Eliminar(int id) => true;
         public IEnumerable<Batalla> ObtenerBatallasActivas() => _batallas.Where(b => !b.EsFinalizada);
         
-        public List<(int BatallaId, int Turno, int AtacanteId, int DefensorId, int Dano, string? Habilidad)> HistorialRegistrado { get; } = new();
+        public List<(int BatallaId, int Turno, int AtacanteId, int DefensorId, int Dano, int? HabilidadId)> HistorialRegistrado { get; } = new();
 
         public bool FinalizarBatalla(int batallaId, int? ganadorId, int numeroTurno, int vidaC1, int vidaC2)
         {
@@ -51,14 +51,14 @@ namespace Tests
             return true;
         }
 
-        public void ProcesarAccionCombate(int batallaId, int atacanteId, int defensorId, int danoRealizado, int nuevaVidaDefensor, string? habilidadUsada, int numeroTurno)
+        public void ProcesarAccionCombate(int batallaId, int atacanteId, int defensorId, int danoRealizado, int nuevaVidaDefensor, int? habilidadId, int numeroTurno)
         {
-            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoRealizado, habilidadUsada));
+            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoRealizado, habilidadId));
         }
 
-        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, string? habilidadUsada, int danoCausado, int nuevaVidaDefensor)
+        public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, int? habilidadId, int danoCausado, int nuevaVidaDefensor)
         {
-            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoCausado, habilidadUsada));
+            HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoCausado, habilidadId));
         }
 
         public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)

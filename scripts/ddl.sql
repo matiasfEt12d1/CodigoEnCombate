@@ -53,13 +53,15 @@ CREATE TABLE HistorialBatallas (
     numero_turno INT NOT NULL,
     atacante_id INT NOT NULL,
     defensor_id INT NOT NULL,
-    habilidad_usada VARCHAR(100) NULL,
+    habilidad_id INT NULL,
     dano_causado INT NOT NULL DEFAULT 0,
     fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_Historial_Batallas FOREIGN KEY (batalla_id) 
         REFERENCES Batallas(id) ON DELETE CASCADE,
     CONSTRAINT FK_Historial_Atacante FOREIGN KEY (atacante_id) 
         REFERENCES Personajes(id),
-    CONSTRAINT FK_Historial_Defensor FOREIGN KEY (defensor_id) 
-        REFERENCES Personajes(id)
+    CONSTRAINT FK_Historial_Defensor FOREIGN KEY (defensor_id)
+        REFERENCES Personajes(id),
+    CONSTRAINT FK_Historial_Habilidad FOREIGN KEY (habilidad_id)
+        REFERENCES Habilidades(id)
 );

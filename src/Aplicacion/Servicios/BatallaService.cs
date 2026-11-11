@@ -55,9 +55,8 @@ namespace Aplicacion.Servicios
             var p2 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente2.Nombre) 
                     ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente2.Nombre}' en la BD.");
 
-            string habilidadP1 = batalla.Combatiente1.Habilidades.Count > 0 
-                ? batalla.Combatiente1.Habilidades[0].Nombre 
-                : "Ataque Básico";
+            // null = Ataque Básico. Se toma el ID de la habilidad cargada desde la BD.
+            int? habilidadP1 = p1.Habilidades.FirstOrDefault()?.Id;
 
             // 1. Ataque Combatiente 1 -> Combatiente 2
             int vidaAntesP2 = batalla.Combatiente2.Vida;
@@ -77,9 +76,7 @@ namespace Aplicacion.Servicios
             // 2. Contraataque Combatiente 2 -> Combatiente 1 (si sigue vivo)
             if (batalla.Combatiente2.EstaVivo)
             {
-                string habilidadP2 = batalla.Combatiente2.Habilidades.Count > 0 
-                    ? batalla.Combatiente2.Habilidades[0].Nombre 
-                    : "Ataque Básico";
+                int? habilidadP2 = p2.Habilidades.FirstOrDefault()?.Id;
 
                 int vidaAntesP1 = batalla.Combatiente1.Vida;
                 batalla.Combatiente2.Atacar(batalla.Combatiente1);

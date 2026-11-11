@@ -105,13 +105,14 @@ BEGIN
 
     SELECT 
         P.tipo AS ClasePersonaje,
-        IFNULL(H.habilidad_usada, 'Ataque Básico') AS Habilidad,
+        IFNULL(HB.nombre, 'Ataque Básico') AS Habilidad,
         COUNT(H.id) AS CantidadUsos,
         ROUND(AVG(H.dano_causado), 2) AS DanoPromedio,
         MAX(H.dano_causado) AS DanoMaximo
     FROM HistorialBatallas H
     INNER JOIN Personajes P ON H.atacante_id = P.id
-    GROUP BY P.tipo, IFNULL(H.habilidad_usada, 'Ataque Básico')
+    LEFT JOIN Habilidades HB ON H.habilidad_id = HB.id
+    GROUP BY P.tipo, IFNULL(HB.nombre, 'Ataque Básico')
     ORDER BY P.tipo, DanoPromedio DESC;
 
     COMMIT;

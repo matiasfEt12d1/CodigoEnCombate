@@ -107,7 +107,7 @@ Representa el registro inmutable de turnos, acciones de ataque y daño producido
 | **`numero_turno`** | `INT` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Turno en el que ocurrió el golpe. Generado en cada turno; inmutable una vez registrado. |
 | **`atacante_id`** | `INT (FK)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | ID del personaje que ejecutó el ataque. Provisto por el SP en tiempo de combate; inmutable. |
 | **`defensor_id`** | `INT (FK)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | ID del personaje que recibió la acción. Provisto por el SP; inmutable. |
-| **`habilidad_usada`** | `VARCHAR(100)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Nombre de la habilidad o "Ataque Básico". Registrado al momento del impacto; inmutable. |
+| **`habilidad_id`** | `INT (FK, NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | ID de la habilidad usada (`NULL` = "Ataque Básico"). El nombre se obtiene de `Habilidades`. Registrado al momento del impacto; inmutable. |
 | **`dano_causado`** | `INT` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Valor del daño real asestado (calculado tras considerar defensas y escudos). Registrado por el SP; inmutable. |
 | **`fecha_registro`** | `DATETIME` | **Usuario**<br>**Admin** | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | ❌<br>✅ | Marca temporal automática fijada con `NOW()`. Inmutable para el Usuario. El Admin puede depurar o corregir logs. |
 
@@ -129,7 +129,7 @@ Ambos roles tienen permiso de **ejecución (`EXECUTE`)**, pero su propósito y f
 | `sp_ResumenBatallasPorPeriodoYTipo` | Resumen de batallas finalizadas y activas por clase | ✅ | ✅ | Lee de `Personajes` y `Batallas`. |
 | `sp_VictoriasYDerrotasPorTipoYPeriodo` | Victorias, derrotas y empates agrupados por tipo | ✅ | ✅ | Lee de `Personajes` y `Batallas`. |
 | `sp_RankingPersonajesEfectividad` | Ranking individual por porcentaje de efectividad | ✅ | ✅ | Lee de `Personajes` y `Batallas`. |
-| `sp_DanoPromedioPorClaseYHabilidad` | Daño promedio y máximo por clase y habilidad | ✅ | ✅ | Lee de `HistorialBatallas` y `Personajes`. |
+| `sp_DanoPromedioPorClaseYHabilidad` | Daño promedio y máximo por clase y habilidad | ✅ | ✅ | Lee de `HistorialBatallas`, `Personajes` y `Habilidades`. |
 | `sp_DanoTotalRealizadoYRecibidoPorPeriodo` | Daño total realizado y recibido por personaje en un período | ✅ | ✅ | Lee de `Personajes` e `HistorialBatallas`. |
 
 ---

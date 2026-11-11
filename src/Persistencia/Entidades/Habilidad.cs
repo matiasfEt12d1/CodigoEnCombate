@@ -8,6 +8,8 @@ namespace Persistencia.Entidades
         private int _costoRecurso;
         private int _potencia;
 
+        public int Id { get; set; }
+
         public string Nombre
         {
             get => _nombre;
