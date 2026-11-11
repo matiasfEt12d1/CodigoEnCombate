@@ -88,5 +88,21 @@ namespace Tests
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() => service.EjecutarTurno(batalla));
         }
+
+        [Fact]
+        public void CrearBatalla_MismoPersonajeEnDosInstancias_LanzaExcepcion()
+        {
+            // Arrange
+            var personajeRepo = new FakePersonajeRepository();
+            var batallaRepo = new FakeBatallaRepository();
+            var service = new BatallaService(batallaRepo, personajeRepo);
+
+            var c1 = new Guerrero("P1", 100, 15, 5, 0) { Id = 1 };
+            var copiaC1 = new Guerrero("P1", 100, 15, 5, 0) { Id = 1 };
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => service.CrearBatalla(c1, copiaC1));
+            Assert.Empty(batallaRepo.ObtenerTodos());
+        }
     }
 }

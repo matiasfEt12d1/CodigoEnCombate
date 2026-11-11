@@ -33,11 +33,14 @@ namespace Persistencia.Entidades
 
         public Batalla(Personaje combatiente1, Personaje combatiente2)
         {
-            if (combatiente1 == combatiente2)
-                throw new InvalidOperationException("Un personaje no puede luchar contra sí mismo.");
-
             Combatiente1 = combatiente1;
             Combatiente2 = combatiente2;
+
+            // Mismo objeto, o dos instancias del mismo personaje ya guardado (mismo Id).
+            if (ReferenceEquals(Combatiente1, Combatiente2)
+                || (Combatiente1.Id > 0 && Combatiente1.Id == Combatiente2.Id))
+                throw new InvalidOperationException("Un personaje no puede luchar contra sí mismo.");
+
             NumeroTurno = 1;
         }
     }

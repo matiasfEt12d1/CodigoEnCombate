@@ -43,8 +43,9 @@ CREATE TABLE Batallas (
         REFERENCES Personajes(id),
     CONSTRAINT FK_Batallas_Combatiente2 FOREIGN KEY (combatiente2_id) 
         REFERENCES Personajes(id),
-    CONSTRAINT FK_Batallas_Ganador FOREIGN KEY (ganador_id) 
-        REFERENCES Personajes(id)
+    CONSTRAINT FK_Batallas_Ganador FOREIGN KEY (ganador_id)
+        REFERENCES Personajes(id),
+    CONSTRAINT CK_Batallas_Distintos CHECK (combatiente1_id <> combatiente2_id)
 );
 
 CREATE TABLE HistorialBatallas (
@@ -63,5 +64,6 @@ CREATE TABLE HistorialBatallas (
     CONSTRAINT FK_Historial_Defensor FOREIGN KEY (defensor_id)
         REFERENCES Personajes(id),
     CONSTRAINT FK_Historial_Habilidad FOREIGN KEY (habilidad_id)
-        REFERENCES Habilidades(id)
+        REFERENCES Habilidades(id),
+    CONSTRAINT CK_Historial_Distintos CHECK (atacante_id <> defensor_id)
 );
