@@ -19,6 +19,9 @@ builder.Services.AddScoped<IPersonajeApiService, PersonajeApiService>();
 builder.Services.AddScoped<ICombateService, CombateService>();
 builder.Services.AddScoped<ITurnoService, TurnoService>();
 
+// Servicios y repositorios del simulador del bimestre anterior (base codigo_en_combate).
+builder.Services.AgregarCodigoEnCombate();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opciones =>
 {
