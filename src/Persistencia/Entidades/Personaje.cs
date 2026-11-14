@@ -59,6 +59,10 @@ namespace Persistencia.Entidades
         public bool EstaVivo => Vida > 0;
         public IReadOnlyList<Habilidad> Habilidades => _habilidades.AsReadOnly();
 
+        // Todo lo que puede perder antes de ser derrotado. Sirve para medir el daño recibido
+        // aunque una parte la absorba otra cosa que no sea la vida (por ejemplo, el escudo del Guerrero).
+        public virtual int VidaEfectiva => Vida;
+
         protected Personaje(string nombre, int vidaMax, int ataque, int defensa)
         {
             Nombre = nombre;
@@ -90,6 +94,12 @@ namespace Persistencia.Entidades
         }
 
         public abstract void UsarHabilidad(Personaje objetivo);
+
+        // Deja al personaje listo para una nueva batalla.
+        public virtual void Restaurar()
+        {
+            Vida = VidaMax;
+        }
 
         protected void ValidarPuedeActuar(Personaje objetivo)
         {

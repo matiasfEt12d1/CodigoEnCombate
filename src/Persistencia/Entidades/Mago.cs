@@ -35,6 +35,12 @@ namespace Persistencia.Entidades
             Mana = manaMax;
         }
 
+        public override void Restaurar()
+        {
+            base.Restaurar();
+            Mana = ManaMax;
+        }
+
         public override void Atacar(Personaje objetivo)
         {
             if (objetivo == null) throw new ArgumentNullException(nameof(objetivo));

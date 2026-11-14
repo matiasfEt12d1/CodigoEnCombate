@@ -20,6 +20,8 @@ namespace Persistencia.Entidades
             Escudo = escudo;
         }
 
+        public override int VidaEfectiva => Vida + Escudo;
+
         public override void RecibirDanio(int cantidad)
         {
             if (cantidad < 0) return;
