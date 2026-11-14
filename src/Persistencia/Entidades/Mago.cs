@@ -57,15 +57,11 @@ namespace Persistencia.Entidades
             objetivo.RecibirDanio(danioTotal);
         }
 
-        // Bola de fuego: consume maná y hace el doble de ataque ignorando la defensa.
-        public override void UsarHabilidad(Personaje objetivo)
-        {
-            ValidarPuedeActuar(objetivo);
-            if (Mana < CostoBolaDeFuego)
-                throw new InvalidOperationException("Maná insuficiente para lanzar Bola de fuego.");
+        // Composición: el Mago tiene su habilidad (Bola de fuego) y le delega la acción.
+        private readonly IHabilidad<Mago> _habilidad = new BolaDeFuego();
 
-            Mana -= CostoBolaDeFuego;
-            objetivo.RecibirDanio(Ataque * 2);
-        }
+        public override bool PuedeUsarHabilidad => EstaVivo && _habilidad.PuedeUsarse(this);
+
+        public override void UsarHabilidad(Personaje objetivo) => EjecutarHabilidad(_habilidad, this, objetivo);
     }
 }

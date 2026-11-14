@@ -41,16 +41,11 @@ namespace Persistencia.Entidades
             objetivo.RecibirDanio(danio);
         }
 
-        // Disparo doble: consume dos flechas y la defensa se aplica a cada disparo.
-        public override void UsarHabilidad(Personaje objetivo)
-        {
-            ValidarPuedeActuar(objetivo);
-            if (CantidadFlechas < FlechasDisparoDoble)
-                throw new InvalidOperationException("No hay flechas suficientes para Disparo doble.");
+        // Composición: el Arquero tiene su habilidad (Disparo doble) y le delega la acción.
+        private readonly IHabilidad<Arquero> _habilidad = new DisparoDoble();
 
-            CantidadFlechas -= FlechasDisparoDoble;
-            int danioPorFlecha = Math.Max(1, Ataque - objetivo.Defensa);
-            objetivo.RecibirDanio(danioPorFlecha * FlechasDisparoDoble);
-        }
+        public override bool PuedeUsarHabilidad => EstaVivo && _habilidad.PuedeUsarse(this);
+
+        public override void UsarHabilidad(Personaje objetivo) => EjecutarHabilidad(_habilidad, this, objetivo);
     }
 }

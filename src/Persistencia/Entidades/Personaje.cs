@@ -93,7 +93,23 @@ namespace Persistencia.Entidades
             Vida -= cantidad;
         }
 
+        // Cada tipo usa su propia habilidad (IHabilidad): el turno no pregunta por la clase concreta.
         public abstract void UsarHabilidad(Personaje objetivo);
+
+        // Si tiene los recursos para usar su habilidad ahora (maná, flechas, etc.).
+        public abstract bool PuedeUsarHabilidad { get; }
+
+        // Pasos comunes a todas las habilidades: validar, revisar recursos y aplicar.
+        protected void EjecutarHabilidad<TLanzador>(IHabilidad<TLanzador> habilidad, TLanzador lanzador, Personaje objetivo)
+            where TLanzador : Personaje
+        {
+            if (habilidad == null) throw new ArgumentNullException(nameof(habilidad));
+            ValidarPuedeActuar(objetivo);
+            if (!habilidad.PuedeUsarse(lanzador))
+                throw new InvalidOperationException($"{Nombre} no tiene recursos suficientes para usar {habilidad.Nombre}.");
+
+            habilidad.Aplicar(lanzador, objetivo);
+        }
 
         // Deja al personaje listo para una nueva batalla.
         public virtual void Restaurar()
@@ -106,5 +122,22 @@ namespace Persistencia.Entidades
             if (objetivo == null) throw new ArgumentNullException(nameof(objetivo));
             if (!EstaVivo) throw new InvalidOperationException("Un personaje derrotado no puede actuar.");
         }
+
+        // Sobrecarga de operadores: dos referencias son el mismo personaje si son el mismo objeto
+        // o si los dos ya están guardados con el mismo Id.
+        public static bool operator ==(Personaje? izquierdo, Personaje? derecho)
+        {
+            if (ReferenceEquals(izquierdo, derecho)) return true;
+            if (izquierdo is null || derecho is null) return false;
+            return izquierdo.Id > 0 && izquierdo.Id == derecho.Id;
+        }
+
+        public static bool operator !=(Personaje? izquierdo, Personaje? derecho) => !(izquierdo == derecho);
+
+        public override bool Equals(object? obj) => obj is Personaje otro && this == otro;
+
+        // Sin Id todavía, cada objeto es distinto: se usa el hash de la referencia.
+        public override int GetHashCode() =>
+            Id > 0 ? Id.GetHashCode() : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this);
     }
 }

@@ -110,6 +110,21 @@ namespace Tests
         }
 
         [Fact]
+        public void ResolverTurno_SegundoSinRecursos_NoAplicaNingunaAccion()
+        {
+            var guerrero = new Guerrero("Thorin", 120, 18, 8, 0);
+            var arquero = new Arquero("Legolia", 90, 16, 5, 1);
+            var batalla = new Batalla(guerrero, arquero);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                _service.ResolverTurno(batalla, AccionCombate.Atacar, AccionCombate.Habilidad));
+
+            Assert.Equal(90, arquero.Vida);
+            Assert.Equal(1, arquero.CantidadFlechas);
+            Assert.Equal(1, batalla.NumeroTurno);
+        }
+
+        [Fact]
         public void Restaurar_DejaAlPersonajeListoParaOtraBatalla()
         {
             var mago = new Mago("Merlina", 80, 14, 4, 60) { Vida = 0, Mana = 5 };

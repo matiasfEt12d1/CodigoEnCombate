@@ -44,9 +44,8 @@ namespace Persistencia.Entidades
             Combatiente1 = combatiente1;
             Combatiente2 = combatiente2;
 
-            // Mismo objeto, o dos instancias del mismo personaje ya guardado (mismo Id).
-            if (ReferenceEquals(Combatiente1, Combatiente2)
-                || (Combatiente1.Id > 0 && Combatiente1.Id == Combatiente2.Id))
+            // Mismo objeto, o dos instancias del mismo personaje ya guardado (operador == de Personaje).
+            if (Combatiente1 == Combatiente2)
                 throw new InvalidOperationException("Un personaje no puede luchar contra sí mismo.");
 
             NumeroTurno = 1;

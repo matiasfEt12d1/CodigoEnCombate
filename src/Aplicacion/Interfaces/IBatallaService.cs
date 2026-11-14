@@ -6,7 +6,7 @@ namespace Aplicacion.Interfaces
     public interface IBatallaService
     {
         Batalla CrearBatalla(Personaje combatiente1, Personaje combatiente2);
-        Batalla CrearBatallaPorIds(int combatiente1Id, int combatiente2Id);
+        Batalla CrearBatalla(int combatiente1Id, int combatiente2Id);
         bool EjecutarTurno(
             Batalla batalla,
             AccionCombate accionCombatiente1 = AccionCombate.Atacar,

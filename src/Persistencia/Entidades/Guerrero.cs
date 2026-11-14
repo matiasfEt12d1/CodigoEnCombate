@@ -40,14 +40,11 @@ namespace Persistencia.Entidades
             base.RecibirDanio(cantidad);
         }
 
-        // Embestida: descarga todo el escudo como daño adicional.
-        public override void UsarHabilidad(Personaje objetivo)
-        {
-            ValidarPuedeActuar(objetivo);
+        // Composición: el Guerrero tiene su habilidad (Embestida) y le delega la acción.
+        private readonly IHabilidad<Guerrero> _habilidad = new Embestida();
 
-            int danio = Math.Max(1, (Ataque + Escudo) - objetivo.Defensa);
-            Escudo = 0;
-            objetivo.RecibirDanio(danio);
-        }
+        public override bool PuedeUsarHabilidad => EstaVivo && _habilidad.PuedeUsarse(this);
+
+        public override void UsarHabilidad(Personaje objetivo) => EjecutarHabilidad(_habilidad, this, objetivo);
     }
 }

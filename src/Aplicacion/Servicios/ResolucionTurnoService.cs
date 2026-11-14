@@ -8,16 +8,23 @@ namespace Aplicacion.Servicios
     // Qué hace cada acción lo decide cada personaje (polimorfismo).
     public class ResolucionTurnoService : IResolucionTurnoService
     {
-        private sealed record Accion(Action<Personaje, Personaje> Ejecutar, Func<Personaje, int?> HabilidadUsada);
+        private sealed record Accion(
+            Action<Personaje, Personaje> Ejecutar,
+            Func<Personaje, bool> Disponible,
+            Func<Personaje, int?> HabilidadUsada);
 
         private static readonly Dictionary<AccionCombate, Accion> Acciones = new()
         {
-            // Un ataque básico no usa ninguna habilidad.
-            [AccionCombate.Atacar] = new Accion((atacante, defensor) => atacante.Atacar(defensor), _ => null),
+            // Un ataque básico siempre está disponible y no usa ninguna habilidad.
+            [AccionCombate.Atacar] = new Accion(
+                (atacante, defensor) => atacante.Atacar(defensor),
+                _ => true,
+                _ => null),
 
-            // Se registra la habilidad guardada del personaje, si tiene una.
+            // Depende de los recursos del personaje; se registra su habilidad guardada, si tiene una.
             [AccionCombate.Habilidad] = new Accion(
                 (atacante, defensor) => atacante.UsarHabilidad(defensor),
+                atacante => atacante.PuedeUsarHabilidad,
                 atacante => atacante.Habilidades.FirstOrDefault(h => h.Id > 0)?.Id)
         };
 
@@ -31,6 +38,11 @@ namespace Aplicacion.Servicios
 
             var accion1 = Buscar(accionCombatiente1);
             var accion2 = Buscar(accionCombatiente2);
+
+            // Se revisa antes de actuar para que el turno no quede aplicado a medias.
+            ValidarDisponible(batalla.Combatiente1, accionCombatiente1, accion1);
+            ValidarDisponible(batalla.Combatiente2, accionCombatiente2, accion2);
+
             int numeroTurno = batalla.NumeroTurno;
 
             var resueltas = new List<AccionResuelta>
@@ -51,6 +63,12 @@ namespace Aplicacion.Servicios
             Acciones.TryGetValue(accion, out var encontrada)
                 ? encontrada
                 : throw new ArgumentOutOfRangeException(nameof(accion), $"Acción no soportada: {accion}");
+
+        private static void ValidarDisponible(Personaje personaje, AccionCombate tipo, Accion accion)
+        {
+            if (!accion.Disponible(personaje))
+                throw new InvalidOperationException($"{personaje.Nombre} no puede usar la acción '{tipo}': recursos insuficientes.");
+        }
 
         private static AccionResuelta Resolver(Personaje atacante, Personaje defensor, AccionCombate tipo, Accion accion)
         {

@@ -42,7 +42,8 @@ namespace Aplicacion.Servicios
             return batalla;
         }
 
-        public Batalla CrearBatallaPorIds(int combatiente1Id, int combatiente2Id)
+        // Sobrecarga de CrearBatalla: la misma operación, pero a partir de los ID guardados.
+        public Batalla CrearBatalla(int combatiente1Id, int combatiente2Id)
         {
             if (combatiente1Id == combatiente2Id)
                 throw new InvalidOperationException("Un personaje no puede luchar contra sí mismo.");

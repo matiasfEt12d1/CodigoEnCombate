@@ -103,6 +103,27 @@ namespace Tests
         }
 
         [Fact]
+        public void CrearBatalla_PorIds_UsaLosPersonajesGuardados()
+        {
+            var guerrero = GuerreroRegistrado();
+            var mago = MagoRegistrado();
+
+            var batalla = _service.CrearBatalla(guerrero.Id, mago.Id);
+
+            Assert.Same(guerrero, batalla.Combatiente1);
+            Assert.Same(mago, batalla.Combatiente2);
+            Assert.Single(_batallas.ObtenerTodos());
+        }
+
+        [Fact]
+        public void CrearBatalla_PorIdsRepetidos_LanzaExcepcion()
+        {
+            var guerrero = GuerreroRegistrado();
+
+            Assert.Throws<InvalidOperationException>(() => _service.CrearBatalla(guerrero.Id, guerrero.Id));
+        }
+
+        [Fact]
         public void CrearBatalla_PersonajeSinRegistrar_LanzaExcepcion()
         {
             var guerrero = GuerreroRegistrado();

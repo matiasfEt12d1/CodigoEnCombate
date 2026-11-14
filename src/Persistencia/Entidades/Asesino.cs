@@ -31,13 +31,11 @@ namespace Persistencia.Entidades
             objetivo.RecibirDanio(danio);
         }
 
-        // Golpe sigiloso: crítico garantizado, sin depender de la probabilidad.
-        public override void UsarHabilidad(Personaje objetivo)
-        {
-            ValidarPuedeActuar(objetivo);
+        // Composición: el Asesino tiene su habilidad (Golpe sigiloso) y le delega la acción.
+        private readonly IHabilidad<Asesino> _habilidad = new GolpeSigiloso();
 
-            int danio = Math.Max(1, (Ataque * 2) - objetivo.Defensa);
-            objetivo.RecibirDanio(danio);
-        }
+        public override bool PuedeUsarHabilidad => EstaVivo && _habilidad.PuedeUsarse(this);
+
+        public override void UsarHabilidad(Personaje objetivo) => EjecutarHabilidad(_habilidad, this, objetivo);
     }
 }
