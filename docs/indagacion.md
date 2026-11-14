@@ -99,3 +99,74 @@ También se confirmaron estas ideas:
 - Un ID inexistente da `404`.
 - Un personaje derrotado no puede actuar.
 - La falta de maná o de flechas para la habilidad da `400`.
+
+---
+
+## Actividad 2: DTO entre la API y el servicio
+
+### Qué es un DTO
+
+Un **DTO** (*Data Transfer Object*) es un objeto que solo transporta datos entre dos capas, en este caso entre el cliente y el servicio. No tiene reglas ni comportamiento: define el **contrato**, es decir, qué datos entran y qué datos salen.
+
+| | DTO | Entidad del dominio |
+| :--- | :--- | :--- |
+| Para qué está | Transportar datos hacia o desde el cliente | Representar el problema y sus reglas |
+| Comportamiento | Ninguno | Sí: `Atacar`, `RecibirDanio`, `UsarHabilidad`... |
+| Validaciones | No: se validan en el servicio | Sí: en sus propiedades (vida no negativa, nombre no vacío) |
+| Forma | La que necesita cada solicitud o respuesta | La que necesita el modelo |
+| Si cambia | Cambia el contrato con el cliente | No debería afectar al cliente |
+
+Sirve para:
+- Decidir exactamente qué datos acepta cada ruta.
+- No mostrar datos internos.
+- Poder cambiar las clases del dominio o las tablas sin romper a los clientes.
+
+### Prueba de concepto
+
+- [`exploracion/dto/PersonajeDtos.cs`](../exploracion/dto/PersonajeDtos.cs) define dos DTO:
+  - `CrearPersonajeSolicitud(Nombre, Tipo)`, el de entrada.
+  - `PersonajeCreadoRespuesta(Id, Nombre)`, el de salida.
+- [`exploracion/dto/ServicioPersonajes.cs`](../exploracion/dto/ServicioPersonajes.cs) recibe el primero, arma la entidad `Personaje` con las estadísticas base del tipo, la guarda en una lista en memoria y devuelve el segundo. La entidad es una clase privada del servicio, así que no puede salir de él.
+
+Los dos archivos se compilan con `exploracion/Exploracion.csproj`. Los ejemplos de abajo salen de ejecutar el servicio y serializar con las mismas opciones JSON que usa Minimal API.
+
+### Ejemplo JSON
+
+**Entrada.** El cliente manda de más:
+
+```json
+{ "nombre": "Thorin", "tipo": "Guerrero", "vidaMax": 9999, "id": 50 }
+```
+
+**Salida:**
+
+```json
+{ "id": 1, "nombre": "Thorin" }
+```
+
+`vidaMax` e `id` se ignoran porque `CrearPersonajeSolicitud` no los tiene. Si el servicio recibiera la entidad directamente, el cliente podría elegir su propia vida o su ID. Con un tipo que no existe (`"tipo": "Dragon"`), el servicio rechaza la solicitud con *"El tipo debe ser uno de: Guerrero, Mago, Arquero, Asesino."*
+
+### Qué datos no deberían exponerse
+
+- **Datos de control internos**: la fecha de creación, y en el proyecto final la vida y el recurso *antes* de cada turno (`vida_personaje1_antes`...). Solo sirven para deshacer el último turno: están en `TurnoRegistro` pero no en `TurnoRespuesta`.
+- **Representaciones internas**: el combate guarda `turno_personaje1` como booleano. La respuesta lo traduce a `turnoDeId`, el ID de quien actúa, que es lo que le sirve al cliente.
+- **Comportamiento y estado del objeto**: métodos, listas privadas o referencias a otros objetos. Al serializar una entidad podría salir de más o fallar por referencias circulares.
+- **Datos que el cliente no debe poder fijar**: en la entrada no van `Id`, `VidaMax`, `Ataque` ni `Defensa`. Los decide el servidor.
+- **Credenciales**: ninguna respuesta debe incluir contraseñas ni cadenas de conexión.
+
+### Dónde se transforman los datos
+
+En el **servicio**, nunca en la ruta ni en el repositorio:
+1. **Entrada (DTO → entidad)**: la ruta solo recibe el DTO. El servicio lo valida y arma la entidad, completando lo que el cliente no puede elegir.
+2. **Salida (entidad → DTO)**: el servicio arma el DTO de respuesta con los campos que corresponden y lo devuelve. La ruta solo lo convierte en JSON con el código HTTP.
+
+**En el proyecto final**:
+
+| Paso | Prueba de concepto | Proyecto final |
+| :--- | :--- | :--- |
+| DTO de entrada | `CrearPersonajeSolicitud(Nombre, Tipo)` | `CrearPersonajeSolicitud(Nombre, Tipo)` en `Aplicacion/Dtos/PersonajeDtos.cs` |
+| DTO → entidad | `ServicioPersonajes.Crear` | `PersonajeApiService.Crear` valida, y `CatalogoPersonajes.Nuevo` arma el `PersonajeRegistro` con las estadísticas del tipo |
+| Entidad → DTO | `new PersonajeCreadoRespuesta(Id, Nombre)` | `MapeoDtos` (clase `internal` de `Aplicacion`) arma `PersonajeRespuesta`, `CombateDetalleRespuesta` y `TurnoRespuesta` |
+| DTO de salida | `PersonajeCreadoRespuesta(Id, Nombre)` | `PersonajeRespuesta` con ID, nombre, tipo y estadísticas, sin fecha de creación |
+
+La respuesta del proyecto final tiene más campos que la de la prueba. El contrato pide devolver *"personaje creado y su ID"*, y las estadísticas son información del juego que el cliente necesita para mostrar el personaje.
