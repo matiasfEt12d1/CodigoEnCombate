@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Prueba de concepto de Indagación (Actividad 1). Independiente de src/Proyecto.sln. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- configuracion/ es otro proyecto (Actividad 3): no se compila acá. -->
+  <ItemGroup>
+    <Compile Remove="configuracion/**" />
+    <Content Remove="configuracion/**" />
+    <None Remove="configuracion/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+  </ItemGroup>
+
+</Project>
