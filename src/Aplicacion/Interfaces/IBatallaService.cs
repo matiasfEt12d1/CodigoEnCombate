@@ -7,7 +7,10 @@ namespace Aplicacion.Interfaces
     {
         Batalla CrearBatalla(Personaje combatiente1, Personaje combatiente2);
         Batalla CrearBatallaPorIds(int combatiente1Id, int combatiente2Id);
-        bool EjecutarTurno(Batalla batalla);
+        bool EjecutarTurno(
+            Batalla batalla,
+            AccionCombate accionCombatiente1 = AccionCombate.Atacar,
+            AccionCombate accionCombatiente2 = AccionCombate.Atacar);
         Personaje EjecutarCombateCompleto(Batalla batalla);
         Batalla? BuscarPorId(int id);
         IEnumerable<Batalla> ListarBatallas();

@@ -61,14 +61,12 @@ namespace Tests
             HistorialRegistrado.Add((batallaId, numeroTurno, atacanteId, defensorId, danoCausado, habilidadId));
         }
 
-        public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+        public void RegistrarTurno(Batalla batalla, int numeroTurno, AccionTurno accionCombatiente1, AccionTurno? accionCombatiente2)
         {
-            return Enumerable.Empty<RankingTipoPersonajeDto>();
-        }
+            HistorialRegistrado.Add((batalla.Id, numeroTurno, batalla.Combatiente1.Id, batalla.Combatiente2.Id, accionCombatiente1.Danio, accionCombatiente1.HabilidadId));
 
-        public IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
-        {
-            return Enumerable.Empty<ReporteBatallaDetalladoDto>();
+            if (accionCombatiente2 != null)
+                HistorialRegistrado.Add((batalla.Id, numeroTurno, batalla.Combatiente2.Id, batalla.Combatiente1.Id, accionCombatiente2.Danio, accionCombatiente2.HabilidadId));
         }
     }
 

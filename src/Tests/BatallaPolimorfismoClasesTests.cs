@@ -16,7 +16,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var mago = new Mago("Merlin", 100, ataque, 5, manaInicial);
             var objetivo = new Guerrero("Objetivo", 100, 5, defensaObjetivo, 0);
@@ -44,7 +44,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var arquero = new Arquero("Robin", 100, ataqueArquero, 5, 0);
             var objetivo = new Guerrero("Objetivo", 100, 5, defensaObjetivo, 0);
@@ -71,7 +71,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var asesino = new Asesino("Sombra", 100, ataqueAsesino, 5, 1.0);
             var objetivo = new Guerrero("Objetivo", 100, 5, defensaObjetivo, 0);

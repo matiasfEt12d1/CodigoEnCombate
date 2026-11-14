@@ -16,7 +16,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var atacante = new Guerrero("Atacante", 100, ataque, 5, 0);
             var defensor = new Guerrero("Defensor", vidaInicial, 10, defensa, 0);
@@ -43,7 +43,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var atacante = new Guerrero("Atacante", 100, ataque, 0, 0);
             var defensor = new Guerrero("GuerreroEscudo", vidaInicial, 10, defensa, escudoInicial);

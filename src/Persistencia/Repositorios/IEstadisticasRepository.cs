@@ -64,4 +64,27 @@ namespace Persistencia.Repositorios
         public int BatallasFinalizadas { get; set; }
         public int BatallasActivas { get; set; }
     }
+
+    public class RankingTipoPersonajeDto
+    {
+        public string TipoPersonaje { get; set; } = string.Empty;
+        public int TotalBatallas { get; set; }
+        public int TotalVictorias { get; set; }
+        public int TotalDerrotas { get; set; }
+        public decimal DanoPromedioPorAccion { get; set; }
+    }
+
+    public class ReporteBatallaDetalladoDto
+    {
+        public int BatallaId { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public int TurnosTotales { get; set; }
+        public bool Finalizada { get; set; }
+        public string Combatiente1_Nombre { get; set; } = string.Empty;
+        public string Combatiente1_Tipo { get; set; } = string.Empty;
+        public string Combatiente2_Nombre { get; set; } = string.Empty;
+        public string Combatiente2_Tipo { get; set; } = string.Empty;
+        public string Ganador_Nombre { get; set; } = string.Empty;
+        public string Ganador_Tipo { get; set; } = string.Empty;
+    }
 }

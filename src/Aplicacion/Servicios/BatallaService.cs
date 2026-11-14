@@ -11,11 +11,16 @@ namespace Aplicacion.Servicios
     {
         private readonly IBatallaRepository _batallaRepository;
         private readonly IPersonajeRepository _personajeRepository;
+        private readonly IResolucionTurnoService _resolucionTurno;
 
-        public BatallaService(IBatallaRepository batallaRepository, IPersonajeRepository personajeRepository)
+        public BatallaService(
+            IBatallaRepository batallaRepository,
+            IPersonajeRepository personajeRepository,
+            IResolucionTurnoService resolucionTurno)
         {
             _batallaRepository = batallaRepository ?? throw new ArgumentNullException(nameof(batallaRepository));
             _personajeRepository = personajeRepository ?? throw new ArgumentNullException(nameof(personajeRepository));
+            _resolucionTurno = resolucionTurno ?? throw new ArgumentNullException(nameof(resolucionTurno));
         }
 
         public Batalla CrearBatalla(Personaje combatiente1, Personaje combatiente2)
@@ -23,10 +28,16 @@ namespace Aplicacion.Servicios
             if (combatiente1 == null || combatiente2 == null)
                 throw new ArgumentNullException("Ambos combatientes deben ser válidos.");
 
-            if (!combatiente1.EstaVivo || !combatiente2.EstaVivo)
-                throw new InvalidOperationException("Ambos personajes deben estar vivos para iniciar un combate.");
+            if (combatiente1.Id <= 0 || combatiente2.Id <= 0)
+                throw new InvalidOperationException("Los combatientes deben estar registrados antes de iniciar una batalla.");
 
             var batalla = new Batalla(combatiente1, combatiente2);
+
+            // Cada batalla empieza con los combatientes recuperados (sp_RegistrarBatalla hace lo mismo en la base),
+            // así un personaje derrotado puede volver a pelear.
+            combatiente1.Restaurar();
+            combatiente2.Restaurar();
+
             _batallaRepository.Agregar(batalla);
             return batalla;
         }
@@ -44,72 +55,32 @@ namespace Aplicacion.Servicios
             return CrearBatalla(p1, p2);
         }
 
-        public bool EjecutarTurno(Batalla batalla)
+        // Resuelve el turno con las reglas del dominio y lo guarda entero en una sola transacción.
+        public bool EjecutarTurno(
+            Batalla batalla,
+            AccionCombate accionCombatiente1 = AccionCombate.Atacar,
+            AccionCombate accionCombatiente2 = AccionCombate.Atacar)
         {
             if (batalla == null) throw new ArgumentNullException(nameof(batalla));
             if (batalla.EsFinalizada)
                 throw new InvalidOperationException("La batalla ya ha finalizado.");
+            if (batalla.Id <= 0)
+                throw new InvalidOperationException("La batalla debe estar registrada antes de ejecutar turnos.");
+            if (batalla.Combatiente1.Id <= 0 || batalla.Combatiente2.Id <= 0)
+                throw new InvalidOperationException("Los combatientes deben estar registrados antes de ejecutar turnos.");
 
-            var p1 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente1.Nombre) 
-                    ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente1.Nombre}' en la BD.");
-            var p2 = _personajeRepository.ObtenerPorNombre(batalla.Combatiente2.Nombre) 
-                    ?? throw new InvalidOperationException($"No se encontró al personaje '{batalla.Combatiente2.Nombre}' en la BD.");
+            var turno = _resolucionTurno.ResolverTurno(batalla, accionCombatiente1, accionCombatiente2);
 
-            // null = Ataque Básico. Se toma el ID de la habilidad cargada desde la BD.
-            int? habilidadP1 = p1.Habilidades.FirstOrDefault()?.Id;
+            var accion1 = turno.Acciones[0];
+            var accion2 = turno.Acciones.Count > 1 ? turno.Acciones[1] : null;
 
-            // 1. Ataque Combatiente 1 -> Combatiente 2
-            int vidaAntesP2 = batalla.Combatiente2.Vida;
-            batalla.Combatiente1.Atacar(batalla.Combatiente2);
-            int danoP1 = Math.Max(0, vidaAntesP2 - batalla.Combatiente2.Vida);
+            _batallaRepository.RegistrarTurno(
+                batalla,
+                turno.NumeroTurno,
+                new AccionTurno(accion1.HabilidadId, accion1.Danio),
+                accion2 == null ? null : new AccionTurno(accion2.HabilidadId, accion2.Danio));
 
-            _batallaRepository.ProcesarAccionCombate(
-                batalla.Id, 
-                p1.Id, 
-                p2.Id, 
-                danoP1, 
-                batalla.Combatiente2.Vida, 
-                habilidadP1, 
-                batalla.NumeroTurno
-            );
-
-            // 2. Contraataque Combatiente 2 -> Combatiente 1 (si sigue vivo)
-            if (batalla.Combatiente2.EstaVivo)
-            {
-                int? habilidadP2 = p2.Habilidades.FirstOrDefault()?.Id;
-
-                int vidaAntesP1 = batalla.Combatiente1.Vida;
-                batalla.Combatiente2.Atacar(batalla.Combatiente1);
-                int danoP2 = Math.Max(0, vidaAntesP1 - batalla.Combatiente1.Vida);
-
-                _batallaRepository.ProcesarAccionCombate(
-                    batalla.Id, 
-                    p2.Id, 
-                    p1.Id, 
-                    danoP2, 
-                    batalla.Combatiente1.Vida, 
-                    habilidadP2, 
-                    batalla.NumeroTurno
-                );
-            }
-
-            // Actualizar recursos de los personajes en la BD (maná, escudo, etc.)
-            _personajeRepository.Actualizar(batalla.Combatiente1);
-            _personajeRepository.Actualizar(batalla.Combatiente2);
-
-            // Si un combatiente muere, EsFinalizada se evalúa automáticamente como true en el modelo de Dominio
-            if (batalla.EsFinalizada)
-            {
-                int? ganadorId = batalla.Combatiente1.EstaVivo ? p1.Id : (batalla.Combatiente2.EstaVivo ? p2.Id : null);
-                _batallaRepository.FinalizarBatalla(batalla.Id, ganadorId, batalla.NumeroTurno, batalla.Combatiente1.Vida, batalla.Combatiente2.Vida);
-            }
-            else
-            {
-                batalla.NumeroTurno++;
-                _batallaRepository.Actualizar(batalla);
-            }
-
-            return !batalla.EsFinalizada;
+            return !turno.Finalizada;
         }
         
         public Personaje EjecutarCombateCompleto(Batalla batalla)

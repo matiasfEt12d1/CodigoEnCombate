@@ -17,7 +17,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var c1 = new Guerrero("P1", vidaInicial, ataque, defensa, 0);
             var c2 = new Guerrero("P2", vidaInicial, ataque, defensa, 0);
@@ -46,7 +46,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var fuerte = new Guerrero("Fuerte", vidaFuerte, atqFuerte, 10, 0);
             var debil = new Guerrero("Debil", vidaDebil, atqDebil, 0, 0);
@@ -74,7 +74,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var c1 = new Guerrero("P1", 100, 10, 0, 0);
             var c2 = new Guerrero("P2", 100, 10, 0, 0);
@@ -95,7 +95,7 @@ namespace Tests
             // Arrange
             var personajeRepo = new FakePersonajeRepository();
             var batallaRepo = new FakeBatallaRepository();
-            var service = new BatallaService(batallaRepo, personajeRepo);
+            var service = new BatallaService(batallaRepo, personajeRepo, new ResolucionTurnoService());
 
             var c1 = new Guerrero("P1", 100, 15, 5, 0) { Id = 1 };
             var copiaC1 = new Guerrero("P1", 100, 15, 5, 0) { Id = 1 };

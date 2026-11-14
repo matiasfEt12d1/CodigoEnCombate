@@ -54,20 +54,18 @@ namespace Persistencia.Repositorios
 
         public int Agregar(Batalla entidad)
         {
-            int c1Id = entidad.Combatiente1.Id > 0 
-                ? entidad.Combatiente1.Id 
-                : _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente1.Nombre });
+            if (entidad == null) throw new ArgumentNullException(nameof(entidad));
 
-            int c2Id = entidad.Combatiente2.Id > 0 
-                ? entidad.Combatiente2.Id 
-                : _context.QueryFirst<int>("SELECT id FROM Personajes WHERE nombre = @Nombre ORDER BY id DESC LIMIT 1", new { Nombre = entidad.Combatiente2.Nombre });
+            // Por ID: buscar por nombre podría tomar a otro personaje con el mismo nombre.
+            if (entidad.Combatiente1.Id <= 0 || entidad.Combatiente2.Id <= 0)
+                throw new InvalidOperationException("Los combatientes deben estar registrados antes de guardar la batalla.");
 
             const string sql = "CALL sp_RegistrarBatalla(@p_combatiente1_id, @p_combatiente2_id);";
 
             int idGenerado = _context.QueryFirst<int>(sql, new
             {
-                p_combatiente1_id = c1Id,
-                p_combatiente2_id = c2Id
+                p_combatiente1_id = entidad.Combatiente1.Id,
+                p_combatiente2_id = entidad.Combatiente2.Id
             });
 
             entidad.Id = idGenerado;
@@ -132,7 +130,6 @@ namespace Persistencia.Repositorios
                 p_habilidad_id = habilidadId,
                 p_numero_turno = numeroTurno
             });
-            //TODO ¿Qué pasa si falla algo arriba?
         }
 
         public void RegistrarHistorialTurno(int batallaId, int numeroTurno, int atacanteId, int defensorId, int? habilidadId, int danoCausado, int nuevaVidaDefensor)
@@ -140,25 +137,41 @@ namespace Persistencia.Repositorios
             ProcesarAccionCombate(batallaId, atacanteId, defensorId, danoCausado, nuevaVidaDefensor, habilidadId, numeroTurno);
         }
 
-        public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+        public void RegistrarTurno(Batalla batalla, int numeroTurno, AccionTurno accionCombatiente1, AccionTurno? accionCombatiente2)
         {
-            const string sql = "CALL sp_ObtenerRankingPorTipoPersonaje(@p_fecha_desde, @p_fecha_hasta);";
+            if (batalla == null) throw new ArgumentNullException(nameof(batalla));
+            if (accionCombatiente1 == null) throw new ArgumentNullException(nameof(accionCombatiente1));
 
-            return _context.Query<RankingTipoPersonajeDto>(sql, new
+            var c1 = PersonajeRepository.ObtenerParametros(batalla.Combatiente1);
+            var c2 = PersonajeRepository.ObtenerParametros(batalla.Combatiente2);
+
+            const string sql = @"CALL sp_RegistrarTurno(
+                @p_batalla_id, @p_numero_turno,
+                @p_dano_c1, @p_habilidad_c1_id,
+                @p_dano_c2, @p_habilidad_c2_id,
+                @p_vida_c1, @p_escudo_c1, @p_mana_c1, @p_flechas_c1,
+                @p_vida_c2, @p_escudo_c2, @p_mana_c2, @p_flechas_c2,
+                @p_finalizada, @p_ganador_id
+            );";
+
+            _context.Execute(sql, new
             {
-                p_fecha_desde = fechaDesde,
-                p_fecha_hasta = fechaHasta
-            });
-        }
-
-        public IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
-        {
-            const string sql = "CALL sp_GenerarReporteBatallasDetallado(@p_fecha_desde, @p_fecha_hasta);";
-
-            return _context.Query<ReporteBatallaDetalladoDto>(sql, new
-            {
-                p_fecha_desde = fechaDesde,
-                p_fecha_hasta = fechaHasta
+                p_batalla_id = batalla.Id,
+                p_numero_turno = numeroTurno,
+                p_dano_c1 = accionCombatiente1.Danio,
+                p_habilidad_c1_id = accionCombatiente1.HabilidadId,
+                p_dano_c2 = accionCombatiente2?.Danio,
+                p_habilidad_c2_id = accionCombatiente2?.HabilidadId,
+                p_vida_c1 = c1.Vida,
+                p_escudo_c1 = c1.Escudo,
+                p_mana_c1 = c1.Mana,
+                p_flechas_c1 = c1.CantidadFlechas,
+                p_vida_c2 = c2.Vida,
+                p_escudo_c2 = c2.Escudo,
+                p_mana_c2 = c2.Mana,
+                p_flechas_c2 = c2.CantidadFlechas,
+                p_finalizada = batalla.EsFinalizada,
+                p_ganador_id = batalla.Ganador?.Id
             });
         }
 
@@ -170,28 +183,5 @@ namespace Persistencia.Repositorios
             public int NumeroTurno { get; set; }
             public bool EsFinalizada { get; set; }
         }
-    }
-
-    public class RankingTipoPersonajeDto
-    {
-        public string TipoPersonaje { get; set; } = string.Empty;
-        public int TotalBatallas { get; set; }
-        public int TotalVictorias { get; set; }
-        public int TotalDerrotas { get; set; }
-        public decimal DanoPromedioPorAccion { get; set; }
-    }
-
-    public class ReporteBatallaDetalladoDto
-    {
-        public int BatallaId { get; set; }
-        public DateTime FechaInicio { get; set; }
-        public int TurnosTotales { get; set; }
-        public bool Finalizada { get; set; }
-        public string Combatiente1_Nombre { get; set; } = string.Empty;
-        public string Combatiente1_Tipo { get; set; } = string.Empty;
-        public string Combatiente2_Nombre { get; set; } = string.Empty;
-        public string Combatiente2_Tipo { get; set; } = string.Empty;
-        public string Ganador_Nombre { get; set; } = string.Empty;
-        public string Ganador_Tipo { get; set; } = string.Empty;
     }
 }
