@@ -6,9 +6,9 @@ namespace Persistencia.Repositorios
     // Las lecturas usan por defecto la conexión del invitado; las escrituras, la del administrador.
     public interface ITurnoRepository
     {
-        IEnumerable<TurnoRegistro> ObtenerPorCombate(int combateId, TipoConexion conexion = TipoConexion.Invitado);
-        TurnoRegistro? ObtenerPorId(int combateId, int turnoId, TipoConexion conexion = TipoConexion.Invitado);
-        TurnoRegistro? ObtenerUltimo(int combateId, TipoConexion conexion = TipoConexion.Invitado);
+        IEnumerable<TurnoRegistro> ObtenerPorCombate(int combateId, TipoConexion conexion = TipoConexion.ApiInvitado);
+        TurnoRegistro? ObtenerPorId(int combateId, int turnoId, TipoConexion conexion = TipoConexion.ApiInvitado);
+        TurnoRegistro? ObtenerUltimo(int combateId, TipoConexion conexion = TipoConexion.ApiInvitado);
 
         // En una transacción: inserta el turno y actualiza el combate.
         // Devuelve false (sin cambios) si el combate ya no está en el turno esperado.

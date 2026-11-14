@@ -39,7 +39,7 @@ namespace Aplicacion.Servicios
 
         public Resultado<TurnoEjecutadoRespuesta> Ejecutar(int combateId, EjecutarTurnoSolicitud solicitud)
         {
-            var combate = _combates.ObtenerPorId(combateId, TipoConexion.Administrador);
+            var combate = _combates.ObtenerPorId(combateId, TipoConexion.ApiAdministrador);
             if (combate == null)
                 return Resultado<TurnoEjecutadoRespuesta>.NoEncontrado($"No existe el combate {combateId}.");
 
@@ -57,8 +57,8 @@ namespace Aplicacion.Servicios
             if (combate.IdQueActua != atacanteId)
                 return Resultado<TurnoEjecutadoRespuesta>.Invalido($"No es el turno del personaje {atacanteId}.");
 
-            var registro1 = _personajes.ObtenerPorId(combate.Personaje1Id, TipoConexion.Administrador)!;
-            var registro2 = _personajes.ObtenerPorId(combate.Personaje2Id, TipoConexion.Administrador)!;
+            var registro1 = _personajes.ObtenerPorId(combate.Personaje1Id, TipoConexion.ApiAdministrador)!;
+            var registro2 = _personajes.ObtenerPorId(combate.Personaje2Id, TipoConexion.ApiAdministrador)!;
             var p1 = CatalogoPersonajes.CrearEnCombate(registro1, combate.VidaPersonaje1, combate.RecursoPersonaje1);
             var p2 = CatalogoPersonajes.CrearEnCombate(registro2, combate.VidaPersonaje2, combate.RecursoPersonaje2);
 
@@ -123,7 +123,7 @@ namespace Aplicacion.Servicios
             if (!_turnos.Registrar(turno, actualizado, combate.NumeroTurno))
                 return Resultado<TurnoEjecutadoRespuesta>.Invalido("El combate cambió mientras se ejecutaba el turno. Volver a intentarlo.");
 
-            var guardado = _turnos.ObtenerPorId(combate.Id, turno.Id, TipoConexion.Administrador) ?? turno;
+            var guardado = _turnos.ObtenerPorId(combate.Id, turno.Id, TipoConexion.ApiAdministrador) ?? turno;
             return Resultado<TurnoEjecutadoRespuesta>.Ok(new TurnoEjecutadoRespuesta(
                 MapeoDtos.Turno(guardado),
                 MapeoDtos.CombateEstado(actualizado, registro1, registro2)));
@@ -138,13 +138,13 @@ namespace Aplicacion.Servicios
             if (nota.Length > LargoMaximoNota)
                 return Resultado<TurnoRespuesta>.Invalido($"La nota no puede superar {LargoMaximoNota} caracteres.");
 
-            if (_combates.ObtenerPorId(combateId, TipoConexion.Administrador) == null)
+            if (_combates.ObtenerPorId(combateId, TipoConexion.ApiAdministrador) == null)
                 return Resultado<TurnoRespuesta>.NoEncontrado($"No existe el combate {combateId}.");
 
             if (!_turnos.ActualizarNota(combateId, turnoId, nota.Length == 0 ? null : nota))
                 return Resultado<TurnoRespuesta>.NoEncontrado($"No existe el turno {turnoId} en el combate {combateId}.");
 
-            var turno = _turnos.ObtenerPorId(combateId, turnoId, TipoConexion.Administrador);
+            var turno = _turnos.ObtenerPorId(combateId, turnoId, TipoConexion.ApiAdministrador);
             return turno == null
                 ? Resultado<TurnoRespuesta>.NoEncontrado($"No existe el turno {turnoId} en el combate {combateId}.")
                 : Resultado<TurnoRespuesta>.Ok(MapeoDtos.Turno(turno));
@@ -152,13 +152,13 @@ namespace Aplicacion.Servicios
 
         public Resultado EliminarUltimo(int combateId, int turnoId)
         {
-            var combate = _combates.ObtenerPorId(combateId, TipoConexion.Administrador);
+            var combate = _combates.ObtenerPorId(combateId, TipoConexion.ApiAdministrador);
             if (combate == null) return Resultado.NoEncontrado($"No existe el combate {combateId}.");
 
-            var turno = _turnos.ObtenerPorId(combateId, turnoId, TipoConexion.Administrador);
+            var turno = _turnos.ObtenerPorId(combateId, turnoId, TipoConexion.ApiAdministrador);
             if (turno == null) return Resultado.NoEncontrado($"No existe el turno {turnoId} en el combate {combateId}.");
 
-            var ultimo = _turnos.ObtenerUltimo(combateId, TipoConexion.Administrador);
+            var ultimo = _turnos.ObtenerUltimo(combateId, TipoConexion.ApiAdministrador);
             if (ultimo == null || ultimo.Id != turno.Id)
                 return Resultado.Conflicto($"El turno {turnoId} no es el último del combate {combateId}.");
 

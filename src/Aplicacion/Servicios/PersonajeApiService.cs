@@ -54,7 +54,7 @@ namespace Aplicacion.Servicios
             var registro = CatalogoPersonajes.Nuevo(solicitud.Nombre!.Trim(), solicitud.Tipo!);
             _personajes.Agregar(registro);
 
-            var creado = _personajes.ObtenerPorId(registro.Id, TipoConexion.Administrador) ?? registro;
+            var creado = _personajes.ObtenerPorId(registro.Id, TipoConexion.ApiAdministrador) ?? registro;
             return Resultado<PersonajeRespuesta>.Ok(MapeoDtos.Personaje(creado));
         }
 
@@ -66,7 +66,7 @@ namespace Aplicacion.Servicios
             if (!_personajes.ActualizarNombre(id, solicitud!.Nombre!.Trim()))
                 return Resultado<PersonajeRespuesta>.NoEncontrado($"No existe el personaje {id}.");
 
-            var actualizado = _personajes.ObtenerPorId(id, TipoConexion.Administrador);
+            var actualizado = _personajes.ObtenerPorId(id, TipoConexion.ApiAdministrador);
             return actualizado == null
                 ? Resultado<PersonajeRespuesta>.NoEncontrado($"No existe el personaje {id}.")
                 : Resultado<PersonajeRespuesta>.Ok(MapeoDtos.Personaje(actualizado));
@@ -74,7 +74,7 @@ namespace Aplicacion.Servicios
 
         public Resultado Eliminar(int id)
         {
-            if (_personajes.ObtenerPorId(id, TipoConexion.Administrador) == null)
+            if (_personajes.ObtenerPorId(id, TipoConexion.ApiAdministrador) == null)
                 return Resultado.NoEncontrado($"No existe el personaje {id}.");
 
             return _personajes.EliminarSiNoParticipo(id)

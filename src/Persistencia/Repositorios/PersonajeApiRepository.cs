@@ -17,13 +17,13 @@ namespace Persistencia.Repositorios
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public IEnumerable<PersonajeRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.Invitado)
+        public IEnumerable<PersonajeRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.Query<PersonajeRegistro>($"SELECT {Columnas} FROM personajes ORDER BY id").ToList();
         }
 
-        public PersonajeRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.Invitado)
+        public PersonajeRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.QueryFirstOrDefault<PersonajeRegistro>(
@@ -37,7 +37,7 @@ namespace Persistencia.Repositorios
                 VALUES (@Nombre, @Tipo, @VidaMax, @Ataque, @Defensa, @Escudo, @ManaMax, @CantidadFlechas, @ProbabilidadCritico);
                 SELECT LAST_INSERT_ID();";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             personaje.Id = connection.QuerySingle<int>(sql, personaje);
             return personaje.Id;
         }
@@ -46,7 +46,7 @@ namespace Persistencia.Repositorios
         {
             const string sql = "UPDATE personajes SET nombre = @Nombre WHERE id = @Id";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             return connection.Execute(sql, new { Id = id, Nombre = nombre }) > 0;
         }
 
@@ -57,7 +57,7 @@ namespace Persistencia.Repositorios
                 WHERE id = @Id
                   AND NOT EXISTS (SELECT 1 FROM combates c WHERE c.personaje1_id = @Id OR c.personaje2_id = @Id)";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             return connection.Execute(sql, new { Id = id }) > 0;
         }
     }

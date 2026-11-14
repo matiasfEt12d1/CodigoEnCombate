@@ -19,13 +19,13 @@ namespace Persistencia.Repositorios
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public IEnumerable<CombateRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.Invitado)
+        public IEnumerable<CombateRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.Query<CombateRegistro>($"SELECT {Columnas} FROM combates ORDER BY id").ToList();
         }
 
-        public IEnumerable<CombateRegistro> ObtenerPorPersonaje(int personajeId, TipoConexion conexion = TipoConexion.Invitado)
+        public IEnumerable<CombateRegistro> ObtenerPorPersonaje(int personajeId, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.Query<CombateRegistro>(
@@ -33,14 +33,14 @@ namespace Persistencia.Repositorios
                 new { Id = personajeId }).ToList();
         }
 
-        public CombateRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.Invitado)
+        public CombateRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.QueryFirstOrDefault<CombateRegistro>(
                 $"SELECT {Columnas} FROM combates WHERE id = @Id", new { Id = id });
         }
 
-        public bool TieneTurnos(int id, TipoConexion conexion = TipoConexion.Invitado)
+        public bool TieneTurnos(int id, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.ExecuteScalar<bool>(
@@ -56,7 +56,7 @@ namespace Persistencia.Repositorios
                         @VidaPersonaje1, @VidaPersonaje2, @RecursoPersonaje1, @RecursoPersonaje2, @GanadorId);
                 SELECT LAST_INSERT_ID();";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             combate.Id = connection.QuerySingle<int>(sql, combate);
             return combate.Id;
         }
@@ -73,7 +73,7 @@ namespace Persistencia.Repositorios
                 WHERE id = @Id
                   AND NOT EXISTS (SELECT 1 FROM turnos t WHERE t.combate_id = @Id)";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             return connection.Execute(sql, combate) > 0;
         }
 
@@ -84,7 +84,7 @@ namespace Persistencia.Repositorios
                 WHERE id = @Id
                   AND NOT EXISTS (SELECT 1 FROM turnos t WHERE t.combate_id = @Id)";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             return connection.Execute(sql, new { Id = id }) > 0;
         }
     }

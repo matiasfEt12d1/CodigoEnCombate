@@ -8,7 +8,7 @@ using Persistencia.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Conexiones: se leen de ConnectionStrings__Invitado y ConnectionStrings__Administrador (variables de entorno).
+// Conexiones: se leen de ConnectionStrings__ApiInvitado y ConnectionStrings__ApiAdministrador (variables de entorno).
 builder.Services.AddSingleton<IDbConnectionFactory, MySqlConnectionFactory>();
 
 builder.Services.AddScoped<IPersonajeApiRepository, PersonajeApiRepository>();

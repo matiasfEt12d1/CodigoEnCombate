@@ -29,7 +29,7 @@ namespace Persistencia.Repositorios
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public IEnumerable<TurnoRegistro> ObtenerPorCombate(int combateId, TipoConexion conexion = TipoConexion.Invitado)
+        public IEnumerable<TurnoRegistro> ObtenerPorCombate(int combateId, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.Query<TurnoRegistro>(
@@ -37,7 +37,7 @@ namespace Persistencia.Repositorios
                 new { CombateId = combateId }).ToList();
         }
 
-        public TurnoRegistro? ObtenerPorId(int combateId, int turnoId, TipoConexion conexion = TipoConexion.Invitado)
+        public TurnoRegistro? ObtenerPorId(int combateId, int turnoId, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.QueryFirstOrDefault<TurnoRegistro>(
@@ -45,7 +45,7 @@ namespace Persistencia.Repositorios
                 new { CombateId = combateId, TurnoId = turnoId });
         }
 
-        public TurnoRegistro? ObtenerUltimo(int combateId, TipoConexion conexion = TipoConexion.Invitado)
+        public TurnoRegistro? ObtenerUltimo(int combateId, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             using var connection = _connectionFactory.CrearConexion(conexion);
             return connection.QueryFirstOrDefault<TurnoRegistro>(
@@ -76,7 +76,7 @@ namespace Persistencia.Repositorios
         {
             const string sql = "UPDATE turnos SET nota = @Nota WHERE id = @TurnoId AND combate_id = @CombateId";
 
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             return connection.Execute(sql, new { CombateId = combateId, TurnoId = turnoId, Nota = nota }) > 0;
         }
 
@@ -104,7 +104,7 @@ namespace Persistencia.Repositorios
         // Ejecuta la operación en una transacción del administrador: confirma si devuelve true, si no la revierte.
         private bool EnTransaccion(Func<IDbConnection, IDbTransaction, bool> operacion)
         {
-            using var connection = _connectionFactory.CrearConexion(TipoConexion.Administrador);
+            using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             connection.Open();
             using var transaction = connection.BeginTransaction();
 

@@ -63,9 +63,9 @@ namespace Tests
 
         public FakePersonajeApiRepository(BaseEnMemoria baseEnMemoria) => _base = baseEnMemoria;
 
-        public IEnumerable<PersonajeRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.Invitado) => _base.Personajes.ToList();
+        public IEnumerable<PersonajeRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.ApiInvitado) => _base.Personajes.ToList();
 
-        public PersonajeRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.Invitado) =>
+        public PersonajeRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.ApiInvitado) =>
             _base.Personajes.FirstOrDefault(p => p.Id == id);
 
         public int Agregar(PersonajeRegistro personaje)
@@ -96,19 +96,19 @@ namespace Tests
 
         public FakeCombateRepository(BaseEnMemoria baseEnMemoria) => _base = baseEnMemoria;
 
-        public IEnumerable<CombateRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.Invitado) =>
+        public IEnumerable<CombateRegistro> ObtenerTodos(TipoConexion conexion = TipoConexion.ApiInvitado) =>
             _base.Combates.Select(BaseEnMemoria.Copiar).ToList();
 
-        public IEnumerable<CombateRegistro> ObtenerPorPersonaje(int personajeId, TipoConexion conexion = TipoConexion.Invitado) =>
+        public IEnumerable<CombateRegistro> ObtenerPorPersonaje(int personajeId, TipoConexion conexion = TipoConexion.ApiInvitado) =>
             _base.Combates.Where(c => c.Participa(personajeId)).Select(BaseEnMemoria.Copiar).ToList();
 
-        public CombateRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.Invitado)
+        public CombateRegistro? ObtenerPorId(int id, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             var combate = _base.Combates.FirstOrDefault(c => c.Id == id);
             return combate == null ? null : BaseEnMemoria.Copiar(combate);
         }
 
-        public bool TieneTurnos(int id, TipoConexion conexion = TipoConexion.Invitado) => _base.Turnos.Any(t => t.CombateId == id);
+        public bool TieneTurnos(int id, TipoConexion conexion = TipoConexion.ApiInvitado) => _base.Turnos.Any(t => t.CombateId == id);
 
         public int Agregar(CombateRegistro combate)
         {
@@ -144,16 +144,16 @@ namespace Tests
 
         public FakeTurnoRepository(BaseEnMemoria baseEnMemoria) => _base = baseEnMemoria;
 
-        public IEnumerable<TurnoRegistro> ObtenerPorCombate(int combateId, TipoConexion conexion = TipoConexion.Invitado) =>
+        public IEnumerable<TurnoRegistro> ObtenerPorCombate(int combateId, TipoConexion conexion = TipoConexion.ApiInvitado) =>
             _base.Turnos.Where(t => t.CombateId == combateId).OrderBy(t => t.Numero).Select(BaseEnMemoria.Copiar).ToList();
 
-        public TurnoRegistro? ObtenerPorId(int combateId, int turnoId, TipoConexion conexion = TipoConexion.Invitado)
+        public TurnoRegistro? ObtenerPorId(int combateId, int turnoId, TipoConexion conexion = TipoConexion.ApiInvitado)
         {
             var turno = _base.Turnos.FirstOrDefault(t => t.CombateId == combateId && t.Id == turnoId);
             return turno == null ? null : BaseEnMemoria.Copiar(turno);
         }
 
-        public TurnoRegistro? ObtenerUltimo(int combateId, TipoConexion conexion = TipoConexion.Invitado) =>
+        public TurnoRegistro? ObtenerUltimo(int combateId, TipoConexion conexion = TipoConexion.ApiInvitado) =>
             ObtenerPorCombate(combateId).LastOrDefault();
 
         public bool Registrar(TurnoRegistro turno, CombateRegistro combateActualizado, int numeroTurnoEsperado)

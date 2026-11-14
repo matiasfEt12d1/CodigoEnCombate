@@ -32,7 +32,7 @@ namespace Aplicacion.Servicios
             var combate = _combates.ObtenerPorId(id);
             if (combate == null) return Resultado<CombateDetalleRespuesta>.NoEncontrado($"No existe el combate {id}.");
 
-            return Resultado<CombateDetalleRespuesta>.Ok(Detalle(combate, TipoConexion.Invitado));
+            return Resultado<CombateDetalleRespuesta>.Ok(Detalle(combate, TipoConexion.ApiInvitado));
         }
 
         public Resultado<CombateDetalleRespuesta> Crear(ParticipantesSolicitud solicitud)
@@ -40,15 +40,15 @@ namespace Aplicacion.Servicios
             var error = ValidarParticipantes(solicitud);
             if (error != null) return Resultado<CombateDetalleRespuesta>.Invalido(error);
 
-            var p1 = _personajes.ObtenerPorId(solicitud.Personaje1Id, TipoConexion.Administrador);
-            var p2 = _personajes.ObtenerPorId(solicitud.Personaje2Id, TipoConexion.Administrador);
+            var p1 = _personajes.ObtenerPorId(solicitud.Personaje1Id, TipoConexion.ApiAdministrador);
+            var p2 = _personajes.ObtenerPorId(solicitud.Personaje2Id, TipoConexion.ApiAdministrador);
             var faltante = PersonajeFaltante(solicitud, p1, p2);
             if (faltante != null) return Resultado<CombateDetalleRespuesta>.NoEncontrado(faltante);
 
             var combate = CombateNuevo(p1!, p2!);
             _combates.Agregar(combate);
 
-            return Resultado<CombateDetalleRespuesta>.Ok(Detalle(combate, TipoConexion.Administrador));
+            return Resultado<CombateDetalleRespuesta>.Ok(Detalle(combate, TipoConexion.ApiAdministrador));
         }
 
         public Resultado<CombateDetalleRespuesta> ActualizarParticipantes(int id, ParticipantesSolicitud solicitud)
@@ -56,11 +56,11 @@ namespace Aplicacion.Servicios
             var error = ValidarParticipantes(solicitud);
             if (error != null) return Resultado<CombateDetalleRespuesta>.Invalido(error);
 
-            var actual = _combates.ObtenerPorId(id, TipoConexion.Administrador);
+            var actual = _combates.ObtenerPorId(id, TipoConexion.ApiAdministrador);
             if (actual == null) return Resultado<CombateDetalleRespuesta>.NoEncontrado($"No existe el combate {id}.");
 
-            var p1 = _personajes.ObtenerPorId(solicitud.Personaje1Id, TipoConexion.Administrador);
-            var p2 = _personajes.ObtenerPorId(solicitud.Personaje2Id, TipoConexion.Administrador);
+            var p1 = _personajes.ObtenerPorId(solicitud.Personaje1Id, TipoConexion.ApiAdministrador);
+            var p2 = _personajes.ObtenerPorId(solicitud.Personaje2Id, TipoConexion.ApiAdministrador);
             var faltante = PersonajeFaltante(solicitud, p1, p2);
             if (faltante != null) return Resultado<CombateDetalleRespuesta>.NoEncontrado(faltante);
 
@@ -71,12 +71,12 @@ namespace Aplicacion.Servicios
             if (!_combates.ActualizarParticipantesSiNoTieneTurnos(combate))
                 return Resultado<CombateDetalleRespuesta>.Conflicto($"El combate {id} ya tiene turnos y no se pueden cambiar sus participantes.");
 
-            return Resultado<CombateDetalleRespuesta>.Ok(Detalle(combate, TipoConexion.Administrador));
+            return Resultado<CombateDetalleRespuesta>.Ok(Detalle(combate, TipoConexion.ApiAdministrador));
         }
 
         public Resultado Eliminar(int id)
         {
-            if (_combates.ObtenerPorId(id, TipoConexion.Administrador) == null)
+            if (_combates.ObtenerPorId(id, TipoConexion.ApiAdministrador) == null)
                 return Resultado.NoEncontrado($"No existe el combate {id}.");
 
             return _combates.EliminarSiNoTieneTurnos(id)
