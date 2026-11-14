@@ -170,3 +170,83 @@ En el **servicio**, nunca en la ruta ni en el repositorio:
 | DTO de salida | `PersonajeCreadoRespuesta(Id, Nombre)` | `PersonajeRespuesta` con ID, nombre, tipo y estadísticas, sin fecha de creación |
 
 La respuesta del proyecto final tiene más campos que la de la prueba. El contrato pide devolver *"personaje creado y su ID"*, y las estadísticas son información del juego que el cliente necesita para mostrar el personaje.
+
+---
+
+## Actividad 3: Registrar dependencias y mostrar Swagger
+
+### Prueba de concepto
+
+[`exploracion/configuracion/`](../exploracion/configuracion) es un proyecto aparte con:
+- `Configuracion.csproj`: el proyecto.
+- `RepositorioEnMemoria.cs`: la interfaz `IRepositorioPersonajes` y su implementación `RepositorioPersonajesEnMemoria`, que es una lista con Thorin y Merlina.
+- `ServicioPersonajes.cs`: la interfaz `IServicioPersonajes` y su implementación.
+- `Program.cs`: registra las dependencias, configura Swagger y define las rutas.
+
+```bash
+dotnet run --project exploracion/configuracion
+```
+
+Swagger queda en `http://localhost:5000/swagger`. Ahí aparecen `GET /api/personajes`, `GET /api/personajes/{id}` y `POST /api/personajes`. El `GET` responde `200` con los dos personajes, `404` con un ID inexistente, y lo agregado con el `POST` aparece en el `GET` siguiente.
+
+### Cómo se registran y cómo llegan a la ruta
+
+En `Program.cs` se le dice al contenedor de dependencias qué clase entregar por cada interfaz, y con qué tiempo de vida:
+
+```csharp
+builder.Services.AddSingleton<IRepositorioPersonajes, RepositorioPersonajesEnMemoria>();
+builder.Services.AddScoped<IServicioPersonajes, ServicioPersonajes>();
+```
+
+La ruta pide el servicio como un parámetro más:
+
+```csharp
+personajes.MapGet("/", (IServicioPersonajes servicio) => Results.Ok(servicio.ObtenerTodos()));
+```
+
+Minimal API ve que `IServicioPersonajes` está registrado y se lo pide al contenedor. Para crear `ServicioPersonajes`, el contenedor ve que su constructor necesita un `IRepositorioPersonajes` y le pasa el registrado. Ni la ruta ni el servicio usan `new` para sus dependencias.
+
+En el proyecto final es igual. [`src/API/Program.cs`](../src/API/Program.cs) registra:
+- `IPersonajeApiRepository`, `ICombateRepository` y `ITurnoRepository` con sus implementaciones de MySQL.
+- `IPersonajeApiService`, `ICombateService` y `ITurnoService`.
+- `IDbConnectionFactory`.
+
+Cada ruta recibe la interfaz del servicio que necesita.
+
+### Por qué depender de interfaces y no crear el repositorio en cada ruta
+
+- **Se puede cambiar la implementación sin tocar las rutas.** La prueba guarda en memoria y el proyecto final en MySQL, pero las rutas y los servicios se escriben igual. Cambiar de una a otra es cambiar una línea del registro.
+- **Se puede probar sin MySQL.** Los tests del proyecto le pasan a los servicios repositorios falsos que implementan las mismas interfaces: `FakePersonajeApiRepository`, `FakeCombateRepository` y `FakeTurnoRepository` en [`src/Tests/BaseEnMemoria.cs`](../src/Tests/BaseEnMemoria.cs). Si el servicio hiciera `new PersonajeApiRepository(...)`, cada test necesitaría una base de datos.
+- **No se repite cómo se construye cada cosa.** `PersonajeApiRepository` necesita un `IDbConnectionFactory`, que a su vez necesita la configuración con las cadenas de conexión. Creándolo en cada ruta, esa cadena de dependencias se repetiría en las quince rutas. Registrado una vez, el contenedor la arma solo.
+- **El contenedor maneja el tiempo de vida.** Decide cuándo crear y cuándo descartar cada objeto, en lugar de crear uno nuevo en cada línea.
+
+### Tiempo de vida de servicio y repositorio
+
+| Tiempo de vida | Significa |
+| :--- | :--- |
+| `Singleton` | Una sola instancia mientras corre la API, compartida por todas las solicitudes |
+| `Scoped` | Una instancia por solicitud HTTP: se crea al empezar y se descarta al terminar |
+| `Transient` | Una instancia nueva cada vez que alguien la pide |
+
+**En la prueba:**
+- **Repositorio en `Singleton`.** La lista en memoria *es* el almacenamiento. Con `Scoped`, cada solicitud tendría su propia lista: lo agregado con el `POST` desaparecería en el `GET` siguiente. Como varias solicitudes pueden usarlo al mismo tiempo, protege la lista con un `lock`.
+- **Servicio en `Scoped`.** No guarda estado propio, solo traduce entre el repositorio y los DTO. Puede depender de un `Singleton` sin problema: lo que no se puede es lo contrario, que un `Singleton` dependa de algo `Scoped`, porque lo retendría más allá de su solicitud.
+
+**En el proyecto final:**
+- **Repositorios y servicios en `Scoped`.** Los datos están en MySQL, no en el objeto. Cada método abre su conexión, la usa y la cierra, así que no hay nada que conservar entre solicitudes, y cada solicitud trabaja con sus propias instancias.
+- **`IDbConnectionFactory` en `Singleton`.** Solo lee las cadenas de conexión de la configuración y crea conexiones nuevas cuando se le piden. No guarda ninguna conexión abierta, así que una sola instancia alcanza para toda la API.
+
+La diferencia entre la prueba y el proyecto final está en dónde viven los datos. Si el repositorio guarda el estado, tiene que ser `Singleton`. Si el estado está en la base, alcanza con `Scoped`.
+
+### Qué configuración habilita Swagger
+
+Hace falta el paquete `Swashbuckle.AspNetCore` en el `.csproj` y cuatro llamadas en `Program.cs`:
+
+| Configuración | Para qué |
+| :--- | :--- |
+| `builder.Services.AddEndpointsApiExplorer()` | Expone las rutas de Minimal API y sus metadatos (parámetros, cuerpos, `.Produces`) para que el generador pueda leerlas |
+| `builder.Services.AddSwaggerGen(...)` | Registra el generador del **documento** OpenAPI. Con `SwaggerDoc("v1", new OpenApiInfo {...})` se le pone título, versión y descripción |
+| `app.UseSwagger()` | Publica ese documento en `/swagger/v1/swagger.json` |
+| `app.UseSwaggerUI(...)` | Publica la **interfaz** web en `/swagger`, que lee el documento y permite probar cada ruta con *Try it out* |
+
+Las dos primeras generan el documento y las dos últimas lo sirven. Sin `UseSwagger` la interfaz no tiene qué mostrar, y sin `UseSwaggerUI` el documento existe pero no hay página para probarlo. Lo que muestra cada ruta sale de `.WithSummary`, `.WithTags`, `.Accepts<T>` y `.Produces<T>(código)`. En el proyecto final, `UseSwaggerUI` además fija `RoutePrefix = "swagger"` y el nombre del documento, y la raíz `/` redirige a Swagger.
