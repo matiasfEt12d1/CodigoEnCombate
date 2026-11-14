@@ -47,14 +47,6 @@ namespace Aplicacion.Servicios
             };
         }
 
-        public IEnumerable<string> ObtenerRankingPersonajes()
-        {
-            var personajes = _personajeRepository.ObtenerTodos();
-            return personajes
-                .OrderByDescending(p => p.Vida)
-                .Select(p => $"{p.Nombre} (Vida actual: {p.Vida}/{p.VidaMax})");
-        }
-
         public IEnumerable<ResumenBatallasPeriodoTipoDto> ObtenerResumenBatallasPorPeriodoYTipo(DateTime fechaDesde, DateTime fechaHasta)
         {
             if (_estadisticasRepository == null)
@@ -93,6 +85,22 @@ namespace Aplicacion.Servicios
                 throw new InvalidOperationException("No se ha configurado el repositorio de estadísticas.");
 
             return _estadisticasRepository.ObtenerDanoTotalRealizadoYRecibidoPorPeriodo(fechaDesde, fechaHasta);
+        }
+
+        public IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            if (_estadisticasRepository == null)
+                throw new InvalidOperationException("No se ha configurado el repositorio de estadísticas.");
+
+            return _estadisticasRepository.ObtenerRankingPorTipoPersonaje(fechaDesde, fechaHasta);
+        }
+
+        public IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            if (_estadisticasRepository == null)
+                throw new InvalidOperationException("No se ha configurado el repositorio de estadísticas.");
+
+            return _estadisticasRepository.GenerarReporteBatallasDetallado(fechaDesde, fechaHasta);
         }
     }
 }

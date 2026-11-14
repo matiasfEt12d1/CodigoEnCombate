@@ -31,27 +31,44 @@ namespace Tests
         }
 
         [Fact]
-        public void ObtenerRankingPersonajes_RetornaOrdenadoPorVidaDescendente()
+        public void ObtenerRankingPorTipoPersonaje_DevuelveElRankingDelRepositorio()
         {
             // Arrange
-            var personajeRepo = new FakePersonajeRepository();
-            var batallaRepo = new FakeBatallaRepository();
-            var estadisticasRepo = new FakeEstadisticasRepository();
-
-            var p1 = new Guerrero("Thor", 100, 20, 10, 0) { Vida = 40 };
-            var p2 = new Mago("Gandalf", 80, 25, 5, 30) { Vida = 80 };
-            personajeRepo.Agregar(p1);
-            personajeRepo.Agregar(p2);
-
-            var service = new EstadisticasService(batallaRepo, personajeRepo, estadisticasRepo);
+            var estadisticasRepo = new RankingFakeEstadisticasRepository();
+            var service = new EstadisticasService(new FakeBatallaRepository(), new FakePersonajeRepository(), estadisticasRepo);
+            var desde = new DateTime(2026, 1, 1);
+            var hasta = new DateTime(2026, 12, 31);
 
             // Act
-            var ranking = service.ObtenerRankingPersonajes().ToList();
+            var ranking = service.ObtenerRankingPorTipoPersonaje(desde, hasta).ToList();
 
             // Assert
-            Assert.Equal(2, ranking.Count);
-            Assert.StartsWith("Gandalf", ranking[0]);
-            Assert.StartsWith("Thor", ranking[1]);
+            Assert.Equal("Guerrero", ranking.Single().TipoPersonaje);
+            Assert.Equal((desde, hasta), estadisticasRepo.PeriodoConsultado);
+        }
+
+        [Fact]
+        public void GenerarReporteBatallasDetallado_DevuelveElReporteDelRepositorio()
+        {
+            // Arrange
+            var estadisticasRepo = new RankingFakeEstadisticasRepository();
+            var service = new EstadisticasService(new FakeBatallaRepository(), new FakePersonajeRepository(), estadisticasRepo);
+
+            // Act
+            var reporte = service.GenerarReporteBatallasDetallado(DateTime.MinValue, DateTime.MaxValue).ToList();
+
+            // Assert
+            Assert.Equal(1, reporte.Single().BatallaId);
+        }
+
+        [Fact]
+        public void ObtenerRankingPorTipoPersonaje_SinRepositorioDeEstadisticas_LanzaExcepcion()
+        {
+            // Arrange
+            var service = new EstadisticasService(new FakeBatallaRepository(), new FakePersonajeRepository());
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => service.ObtenerRankingPorTipoPersonaje(DateTime.MinValue, DateTime.MaxValue));
         }
 
         private class TestableFakeEstadisticasRepository : FakeEstadisticasRepository
@@ -64,6 +81,20 @@ namespace Tests
             }
 
             public override ResumenGeneralBatallasDto ObtenerResumenGeneralBatallas() => _resumen;
+        }
+
+        private class RankingFakeEstadisticasRepository : FakeEstadisticasRepository
+        {
+            public (DateTime Desde, DateTime Hasta)? PeriodoConsultado { get; private set; }
+
+            public override IEnumerable<RankingTipoPersonajeDto> ObtenerRankingPorTipoPersonaje(DateTime fechaDesde, DateTime fechaHasta)
+            {
+                PeriodoConsultado = (fechaDesde, fechaHasta);
+                return new[] { new RankingTipoPersonajeDto { TipoPersonaje = "Guerrero", TotalVictorias = 3 } };
+            }
+
+            public override IEnumerable<ReporteBatallaDetalladoDto> GenerarReporteBatallasDetallado(DateTime fechaDesde, DateTime fechaHasta)
+                => new[] { new ReporteBatallaDetalladoDto { BatallaId = 1 } };
         }
     }
 }
