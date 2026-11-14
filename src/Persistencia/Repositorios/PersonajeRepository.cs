@@ -4,6 +4,34 @@ namespace Persistencia.Repositorios
 {
     public class PersonajeRepository : IPersonajeRepository
     {
+        // Cómo se arma y se guarda cada tipo de personaje. Cada tipo se registra una sola vez:
+        // no hay if ni switch por clase.
+        private sealed record MapeoTipo(Func<PersonajeDto, Personaje> Crear, Action<Personaje, PersonajeDto> CompletarFila);
+
+        private static readonly Dictionary<string, MapeoTipo> Tipos = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Guerrero"] = new MapeoTipo(
+                d => new Guerrero(d.Nombre, d.VidaMax, d.Ataque, d.Defensa, d.Escudo),
+                (p, d) => d.Escudo = ((Guerrero)p).Escudo),
+
+            ["Mago"] = new MapeoTipo(
+                d => new Mago(d.Nombre, d.VidaMax, d.Ataque, d.Defensa, d.ManaMax) { Mana = d.Mana },
+                (p, d) =>
+                {
+                    var mago = (Mago)p;
+                    d.ManaMax = mago.ManaMax;
+                    d.Mana = mago.Mana;
+                }),
+
+            ["Arquero"] = new MapeoTipo(
+                d => new Arquero(d.Nombre, d.VidaMax, d.Ataque, d.Defensa, d.CantidadFlechas),
+                (p, d) => d.CantidadFlechas = ((Arquero)p).CantidadFlechas),
+
+            ["Asesino"] = new MapeoTipo(
+                d => new Asesino(d.Nombre, d.VidaMax, d.Ataque, d.Defensa, d.ProbabilidadCritico),
+                (p, d) => d.ProbabilidadCritico = ((Asesino)p).ProbabilidadCritico)
+        };
+
         private readonly IDapperContext _context;
 
         public PersonajeRepository(IDapperContext context)
@@ -80,10 +108,14 @@ namespace Persistencia.Repositorios
 
         public bool Actualizar(Personaje entidad)
         {
+            if (entidad == null) throw new ArgumentNullException(nameof(entidad));
+            if (entidad.Id <= 0) return false;
+
+            // Por ID: el nombre no es único y podría actualizar a otro personaje.
             const string sql = @"
-                UPDATE Personajes 
+                UPDATE Personajes
                 SET vida = @Vida, ataque = @Ataque, defensa = @Defensa, escudo = @Escudo, mana = @Mana, cantidad_flechas = @CantidadFlechas
-                WHERE nombre = @Nombre";
+                WHERE id = @Id";
 
             var pms = ObtenerParametros(entidad);
             return _context.Execute(sql, pms) > 0;
@@ -97,48 +129,57 @@ namespace Persistencia.Repositorios
 
         public bool AgregarHabilidad(int personajeId, Habilidad habilidad)
         {
+            // Devuelve el ID generado para que la habilidad pueda registrarse en el historial.
             const string sql = @"
                 INSERT INTO Habilidades (personaje_id, nombre, costo_recurso, potencia)
-                VALUES (@PersonajeId, @Nombre, @CostoRecurso, @Potencia)";
+                VALUES (@PersonajeId, @Nombre, @CostoRecurso, @Potencia);
+                SELECT LAST_INSERT_ID();";
 
-            return _context.Execute(sql, new
+            habilidad.Id = _context.QueryFirst<int>(sql, new
             {
                 PersonajeId = personajeId,
                 habilidad.Nombre,
                 habilidad.CostoRecurso,
                 habilidad.Potencia
-            }) > 0;
+            });
+
+            return habilidad.Id > 0;
         }
+
+        private static MapeoTipo Mapeo(string tipo) =>
+            Tipos.TryGetValue(tipo, out var mapeo)
+                ? mapeo
+                : throw new InvalidOperationException($"Tipo de personaje desconocido: {tipo}");
 
         private static Personaje MapearEntidad(PersonajeDto dto)
         {
-            Personaje p = dto.Tipo switch
-            {
-                "Guerrero" => new Guerrero(dto.Nombre, dto.VidaMax, dto.Ataque, dto.Defensa, dto.Escudo),
-                "Mago" => new Mago(dto.Nombre, dto.VidaMax, dto.Ataque, dto.Defensa, dto.ManaMax) { Mana = dto.Mana },
-                "Arquero" => new Arquero(dto.Nombre, dto.VidaMax, dto.Ataque, dto.Defensa, dto.CantidadFlechas),
-                "Asesino" => new Asesino(dto.Nombre, dto.VidaMax, dto.Ataque, dto.Defensa, dto.ProbabilidadCritico),
-                _ => throw new InvalidOperationException($"Tipo de personaje desconocido: {dto.Tipo}")
-            };
-
+            var p = Mapeo(dto.Tipo).Crear(dto);
             p.Id = dto.Id;
             p.Vida = dto.Vida;
             return p;
         }
 
-        private static object ObtenerParametros(Personaje p)
+        // Fila con los datos comunes y los propios del tipo; las columnas que no corresponden quedan en 0.
+        // BatallaRepository la usa para guardar el estado de los combatientes al registrar un turno.
+        internal static PersonajeDto ObtenerParametros(Personaje p)
         {
-            return p switch
+            string tipo = p.GetType().Name;
+            var fila = new PersonajeDto
             {
-                Guerrero g => new { g.Nombre, Tipo = "Guerrero", g.VidaMax, g.Vida, g.Ataque, g.Defensa, g.Escudo, ManaMax = 0, Mana = 0, CantidadFlechas = 0, ProbabilidadCritico = 0.0 },
-                Mago m => new { m.Nombre, Tipo = "Mago", m.VidaMax, m.Vida, m.Ataque, m.Defensa, Escudo = 0, m.ManaMax, m.Mana, CantidadFlechas = 0, ProbabilidadCritico = 0.0 },
-                Arquero a => new { a.Nombre, Tipo = "Arquero", a.VidaMax, a.Vida, a.Ataque, a.Defensa, Escudo = 0, ManaMax = 0, Mana = 0, a.CantidadFlechas, ProbabilidadCritico = 0.0 },
-                Asesino s => new { s.Nombre, Tipo = "Asesino", s.VidaMax, s.Vida, s.Ataque, s.Defensa, Escudo = 0, ManaMax = 0, Mana = 0, CantidadFlechas = 0, s.ProbabilidadCritico },
-                _ => throw new InvalidOperationException("Tipo no soportado")
+                Id = p.Id,
+                Nombre = p.Nombre,
+                Tipo = tipo,
+                VidaMax = p.VidaMax,
+                Vida = p.Vida,
+                Ataque = p.Ataque,
+                Defensa = p.Defensa
             };
+
+            Mapeo(tipo).CompletarFila(p, fila);
+            return fila;
         }
 
-        private class PersonajeDto
+        internal class PersonajeDto
         {
             public int Id { get; set; }
             public string Nombre { get; set; } = string.Empty;
