@@ -26,8 +26,8 @@ Hecho mediante los planes de aprendizaje nivel 2 *Código en combate* (Software 
 CodigoEnCombate/
 ├── backup/combate_api.sql   Backup de la base de la API
 ├── docs/                    Matriz de permisos
-├── scripts/                 Base del simulador (codigo_en_combate)
-├── sql/                     Base de la API (combate_api)
+├── scripts/                 Tablas, procedimientos y usuarios del simulador (en combate_api)
+├── sql/                     Base combate_api: estructura, usuarios de la API y datos de muestra
 └── src/
     ├── API/                 Programa principal: rutas, Swagger e inyección de dependencias
     ├── Aplicacion/          Servicios, interfaces y DTO
@@ -45,38 +45,40 @@ Dependencias: `API -> Aplicacion, Persistencia`, `Aplicacion -> Persistencia` y 
 Requisitos: **.NET SDK 10.0** y **MySQL 8.0**.
 
 ```bash
-git clone https://github.com/TU_USUARIO/codigo-en-combate.git
-cd codigo-en-combate
+git clone https://github.com/matiasfEt12d1/CodigoEnCombate.git
+cd CodigoEnCombate
 dotnet restore src/Proyecto.sln
 ```
 
 ---
 
-## Bases de datos
+## Base de datos `combate_api`
 
-Los scripts usan contraseñas de ejemplo. **Antes de ejecutarlos**, reemplazar los valores `CAMBIAR_...` y no subir las contraseñas reales al repositorio. Todos los comandos se ejecutan desde la raíz del repositorio.
+La API y el simulador del bimestre anterior comparten una sola base, `combate_api`, y la misma tabla `personajes`. El simulador agrega sus tablas (`Habilidades`, `Batallas` e `HistorialBatallas`) y sus stored procedures sobre ella.
 
-### `combate_api` (API)
-
-Reemplazar `CAMBIAR_password_admin` y `CAMBIAR_password_invitado` en `sql/02_usuarios.sql`. Ejecutar cada script por separado, en este orden:
+Los scripts usan contraseñas de ejemplo. **Antes de ejecutarlos**, reemplazar los valores `CAMBIAR_...` en `sql/02_usuarios.sql` y `scripts/usuarios.sql`, y no subir las contraseñas reales al repositorio. Todos los comandos se ejecutan desde la raíz del repositorio, en este orden:
 
 ```bash
 mysql -u root -p -e "source sql/01_estructura.sql"
 mysql -u root -p -e "source sql/02_usuarios.sql"
 mysql -u root -p -e "source sql/03_datos_muestra.sql"
+mysql -u root -p -e "source scripts/install.sql"
 ```
 
-1. **Estructura**: crea la base con las tablas `personajes`, `combates` y `turnos`.
-2. **Usuarios**: `combate_admin` con todos los permisos sobre la base y `combate_invitado` con solo `SELECT`.
+1. **Estructura**: crea la base con las tablas `personajes`, `combates` y `turnos`. Borra la base si ya existía, así que después hay que volver a ejecutar el paso 4.
+2. **Usuarios de la API**: `combate_admin` con todos los permisos sobre la base y `combate_invitado` con solo `SELECT`.
 3. **Datos de muestra**: 5 personajes, 3 combates y 13 turnos.
+4. **Simulador**: ejecuta en orden `ddl` (tablas), `sp` (procedimientos de batalla), `estadisticas` (procedimientos de reportes) y `usuarios` (`administrador` con todos los permisos del servidor y `desarrollador` con todos los permisos sobre `combate_api`). Cada uno también puede ejecutarse solo, por ejemplo `mysql -u root -p -e "source scripts/sp.sql"`.
 
-**Backup** (estructura y datos, sin usuarios ni contraseñas):
+La comparación entre el usuario que juega y el administrador del simulador está en [`docs/matrizPermisos.md`](docs/matrizPermisos.md).
+
+**Backup** (estructura, datos y stored procedures, sin usuarios ni contraseñas):
 
 ```bash
-mysqldump -u root -p --databases combate_api --single-transaction --skip-dump-date --set-gtid-purged=OFF --result-file=backup/combate_api.sql
+mysqldump -u root -p --databases combate_api --routines --single-transaction --skip-dump-date --set-gtid-purged=OFF --result-file=backup/combate_api.sql
 ```
 
-**Restaurar** (en un servidor nuevo, ejecutar después `sql/02_usuarios.sql`):
+**Restaurar** (en un servidor nuevo, ejecutar después `sql/02_usuarios.sql` y `scripts/usuarios.sql`):
 
 ```bash
 mysql -u root -p -e "source backup/combate_api.sql"
@@ -90,16 +92,6 @@ mysql -u combate_invitado -p combate_api -e "INSERT INTO personajes (nombre, tip
 mysql -u combate_invitado -p combate_api -e "UPDATE turnos SET nota = 'cambio' WHERE id = 1;"
 ```
 
-### `codigo_en_combate` (simulador)
-
-Reemplazar `CAMBIAR_password_administrador` y `CAMBIAR_password_desarrollador` en `scripts/usuarios.sql`. Para ejecutar los cuatro scripts en orden (`ddl`, `sp`, `estadisticas`, `usuarios`):
-
-```bash
-mysql -u root -p -e "source scripts/install.sql"
-```
-
-Cada uno también puede ejecutarse solo, por ejemplo `mysql -u root -p -e "source scripts/sp.sql"`. La comparación entre el usuario que juega y el administrador está en [`docs/matrizPermisos.md`](docs/matrizPermisos.md).
-
 ---
 
 ## Variables de entorno
@@ -110,16 +102,16 @@ Las contraseñas no se guardan en el repositorio: cada conexión se define con u
 | :--- | :--- | :--- | :--- |
 | `ConnectionStrings__ApiInvitado` | `combate_api` | `combate_invitado` | Consultas `GET` de la API |
 | `ConnectionStrings__ApiAdministrador` | `combate_api` | `combate_admin` | Escrituras de la API |
-| `ConnectionStrings__Desarrollo` | `codigo_en_combate` | `desarrollador` | Servicios del simulador |
-| `ConnectionStrings__Administrador` | `codigo_en_combate` | `administrador` | Tareas con privilegios globales |
+| `ConnectionStrings__Desarrollo` | `combate_api` | `desarrollador` | Servicios del simulador |
+| `ConnectionStrings__Administrador` | `combate_api` | `administrador` | Tareas con privilegios globales |
 
 Ejemplo en PowerShell (en Bash: `export NOMBRE="valor"`):
 
 ```powershell
 $env:ConnectionStrings__ApiInvitado = "Server=localhost;Database=combate_api;Uid=combate_invitado;Pwd=TU_PASSWORD;"
 $env:ConnectionStrings__ApiAdministrador = "Server=localhost;Database=combate_api;Uid=combate_admin;Pwd=TU_PASSWORD;"
-$env:ConnectionStrings__Desarrollo = "Server=localhost;Database=codigo_en_combate;Uid=desarrollador;Pwd=TU_PASSWORD;"
-$env:ConnectionStrings__Administrador = "Server=localhost;Database=codigo_en_combate;Uid=administrador;Pwd=TU_PASSWORD;"
+$env:ConnectionStrings__Desarrollo = "Server=localhost;Database=combate_api;Uid=desarrollador;Pwd=TU_PASSWORD;"
+$env:ConnectionStrings__Administrador = "Server=localhost;Database=combate_api;Uid=administrador;Pwd=TU_PASSWORD;"
 ```
 
 ---

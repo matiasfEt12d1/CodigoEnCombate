@@ -1,4 +1,4 @@
-USE codigo_en_combate;
+USE combate_api;
 
 DROP PROCEDURE IF EXISTS sp_ResumenBatallasPorPeriodoYTipo;
 DROP PROCEDURE IF EXISTS sp_VictoriasYDerrotasPorTipoYPeriodo;

@@ -8,8 +8,8 @@
 
 | Rol | Usuario MySQL Sugerido | Ámbito de Acceso | Principio / Descripción |
 |:---|:---|:---|:---|
-| **Usuario** | `usuario@localhost` | Base de datos `codigo_en_combate` (restringido a DML operativo y ejecución) | Aplica el **Principio de Menor Privilegio (PoLP)**. Diseñado para interactuar con la aplicación / simulador de combate. Puede consultar datos, crear personajes, iniciar batallas, ejecutar turnos y consultar estadísticas. **No posee permisos DDL**, no puede eliminar registros críticos ni alterar atributos base o historiales. |
-| **Administrador** | `administrador@localhost` | Servidor completo (`*.*`) con `WITH GRANT OPTION` | Control total sobre el motor MySQL, la base de datos `codigo_en_combate`, gestión de cuentas, configuración de privilegios, mantenimiento de integridad, balanceo manual de stats y depuración de datos. |
+| **Usuario** | `usuario@localhost` | Base de datos `combate_api` (restringido a DML operativo y ejecución) | Aplica el **Principio de Menor Privilegio (PoLP)**. Diseñado para interactuar con la aplicación / simulador de combate. Puede consultar datos, crear personajes, iniciar batallas, ejecutar turnos y consultar estadísticas. **No posee permisos DDL**, no puede eliminar registros críticos ni alterar atributos base o historiales. |
+| **Administrador** | `administrador@localhost` | Servidor completo (`*.*`) con `WITH GRANT OPTION` | Control total sobre el motor MySQL, la base de datos `combate_api`, gestión de cuentas, configuración de privilegios, mantenimiento de integridad, balanceo manual de stats y depuración de datos. |
 
 ---
 
@@ -17,8 +17,8 @@
 
 | Operación DDL | Usuario | Administrador | Justificación / Contexto |
 |:---|:---:|:---:|:---|
-| Crear base de datos `codigo_en_combate` | ❌ | ✅ | Solo el DBA inicializa el entorno. |
-| Eliminar base de datos `codigo_en_combate` (`DROP DATABASE`) | ❌ | ✅ | Previene destrucción total accidental o maliciosa. |
+| Crear base de datos `combate_api` | ❌ | ✅ | Solo el DBA inicializa el entorno. |
+| Eliminar base de datos `combate_api` (`DROP DATABASE`) | ❌ | ✅ | Previene destrucción total accidental o maliciosa. |
 | Crear tablas (`CREATE TABLE`) | ❌ | ✅ | La estructura relacional es administrada exclusivamente por el Administrador. |
 | Modificar tablas (`ALTER TABLE`) | ❌ | ✅ | Los cambios de esquema impactan en la aplicación y requieren control DBA. |
 | Eliminar tablas (`DROP TABLE`) | ❌ | ✅ | Acción destructiva irreversible. |
@@ -61,10 +61,12 @@ Representa a los combatientes base (`Personaje`) y sus clases especializadas: **
 | **`vida`** | `INT` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | Salud actual. Se inicializa en `vida_max`. El Usuario la modifica dinámicamente mediante el combate (daño recibido) gestionado por `sp_ProcesarAccionCombate` y `sp_FinalizarBatalla`. El Admin puede resetearla arbitrariamente. |
 | **`ataque`** | `INT` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Estadística base de daño físico. Inmutable para el Usuario. El Admin puede ajustarla por balance. |
 | **`defensa`** | `INT` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Mitigación de daño recibida. Inmutable para el Usuario. El Admin puede modificarla. |
-| **`escudo`** *(Guerrero)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | Recurso defensivo del Guerrero. El Usuario lo inicializa al crearlo y se actualiza (consume) dinámicamente en combate al absorber golpes. El Admin puede restaurarlo manualmente. |
+| **`escudo`** *(Guerrero)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Escudo base del Guerrero, el que usa la API al crear un combate. El Usuario lo define al crearlo; en combate no cambia. El Admin puede modificarlo. |
+| **`escudo_actual`** *(Guerrero)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | Escudo que le queda en el simulador. Arranca en `escudo` y se consume en combate al absorber golpes (`sp_RegistrarTurno`). El Admin puede restaurarlo manualmente. |
 | **`mana_max`** *(Mago)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Límite de maná para el Mago. Inmutable para el Usuario. El Admin puede alterar el valor. |
 | **`mana`** *(Mago)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | Maná actual. El Usuario lo inicializa y lo consume (10 pts por ataque mágico) a través de la lógica de combate. El Admin puede recargarlo o modificarlo. |
-| **`cantidad_flechas`** *(Arquero)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | Munición del Arquero. El Usuario lo inicializa y descuenta 1 unidad por ataque en combate. El Admin puede reabastecer flechas libremente. |
+| **`cantidad_flechas`** *(Arquero)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Munición base del Arquero, la que usa la API al crear un combate. El Usuario la define al crearlo; en combate no cambia. El Admin puede modificarla. |
+| **`flechas_actuales`** *(Arquero)* | `INT (NULL)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | Flechas que le quedan en el simulador. Arrancan en `cantidad_flechas` y se descuenta 1 por ataque en combate. El Admin puede reabastecerlas libremente. |
 | **`probabilidad_critico`** *(Asesino)* | `DECIMAL(3,2)` | **Usuario**<br>**Admin** | ✅<br>✅ | ✅<br>✅ | ❌<br>✅ | ❌<br>✅ | Tasa de impacto crítico (0.00 a 1.00). Inmutable para el Usuario. El Admin puede aumentarla o disminuirla para balancear el juego. |
 
 ---
@@ -145,7 +147,7 @@ Mapeo entre las operaciones expuestas en los repositorios de .NET y los permisos
 | | `ObtenerPorNombre(nombre)` | `SELECT id FROM Personajes WHERE nombre = @Nombre` | ✅ | ✅ | Búsqueda por nombre de combatiente. |
 | | `ObtenerPorTipo(tipo)` | `SELECT id FROM Personajes WHERE tipo = @Tipo` | ✅ | ✅ | Filtrado por clase. |
 | | `Agregar(personaje)` | `INSERT INTO Personajes (...)` | ✅ | ✅ | Creación de nuevos personajes por parte de los jugadores o el admin. |
-| | `Actualizar(personaje)` | `UPDATE Personajes SET vida, escudo, mana, cantidad_flechas...` | ✅ | ✅ | El Usuario lo ejecuta a través de la lógica de combate; el Admin puede actualizar cualquier stat. |
+| | `Actualizar(personaje)` | `UPDATE Personajes SET vida, escudo_actual, mana, flechas_actuales...` | ✅ | ✅ | El Usuario lo ejecuta a través de la lógica de combate; el Admin puede actualizar cualquier stat. |
 | | `Eliminar(id)` | `DELETE FROM Personajes WHERE id = @Id` | ❌ | ✅ | **Bloqueado para el Usuario** para evitar romper integridad referencial con batallas existentes. |
 | | `AgregarHabilidad(pId, hab)` | `INSERT INTO Habilidades (...)` | ✅ | ✅ | Asignación de habilidades al personaje. |
 | **BatallaRepository** | `ObtenerPorId(id)` | `SELECT ... FROM Batallas WHERE id = @Id` | ✅ | ✅ | Consulta de estado de combate. |
@@ -197,13 +199,13 @@ ADMINISTRADOR (DBA / Superusuario)
 ========================================================================================
 USUARIO (Jugador / Aplicación Cliente)
 ========================================================================================
-• Ámbito: codigo_en_combate.* (Restringido a la base de datos de la aplicación).
+• Ámbito: combate_api.* (Restringido a la base de datos de la aplicación).
 • DDL: Ninguno (❌ Bloqueado para cualquier modificación estructural).
 • DML: 
     - Leer (SELECT): Todos los atributos de Personajes, Habilidades, Batallas e Historial.
     - Crear (INSERT): Nuevos Personajes, Habilidades y Batallas (a través de lógica controlada).
     - Actualizar (UPDATE): Limitado estrictamente a los atributos dinámicos de combate:
-         * Personajes: vida, escudo, mana, cantidad_flechas.
+         * Personajes: vida, escudo_actual, mana, flechas_actuales.
          * Batallas: numero_turno, es_finalizada, ganador_id (mediante SPs).
          * Habilidades e HistorialBatallas: Inmutables (❌ No actualizables).
     - Eliminar (DELETE): ❌ Prohibido en todas las tablas para garantizar la integridad

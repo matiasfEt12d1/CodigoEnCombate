@@ -3,7 +3,7 @@ namespace Persistencia;
 // Cada conexión se configura con la variable de entorno ConnectionStrings__<nombre>.
 public enum TipoConexion
 {
-    // Simulador del bimestre anterior (base codigo_en_combate).
+    // Simulador del bimestre anterior (tablas del simulador en combate_api).
     Desarrollo,
     Administrador,
 

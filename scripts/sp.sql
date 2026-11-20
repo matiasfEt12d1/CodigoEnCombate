@@ -1,4 +1,4 @@
-USE codigo_en_combate;
+USE combate_api;
 
 DROP PROCEDURE IF EXISTS sp_RegistrarBatalla;
 DROP PROCEDURE IF EXISTS sp_FinalizarBatalla;
@@ -152,12 +152,13 @@ BEGIN
             VALUES (p_batalla_id, p_numero_turno, v_c2, v_c1, p_habilidad_c2_id, p_dano_c2, NOW());
         END IF;
 
+        -- Estado actual: escudo y cantidad_flechas son valores base que usa la API.
         UPDATE Personajes
-        SET vida = p_vida_c1, escudo = p_escudo_c1, mana = p_mana_c1, cantidad_flechas = p_flechas_c1
+        SET vida = p_vida_c1, escudo_actual = p_escudo_c1, mana = p_mana_c1, flechas_actuales = p_flechas_c1
         WHERE id = v_c1;
 
         UPDATE Personajes
-        SET vida = p_vida_c2, escudo = p_escudo_c2, mana = p_mana_c2, cantidad_flechas = p_flechas_c2
+        SET vida = p_vida_c2, escudo_actual = p_escudo_c2, mana = p_mana_c2, flechas_actuales = p_flechas_c2
         WHERE id = v_c2;
 
         UPDATE Batallas

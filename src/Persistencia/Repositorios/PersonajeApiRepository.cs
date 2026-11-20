@@ -55,7 +55,8 @@ namespace Persistencia.Repositorios
             const string sql = @"
                 DELETE FROM personajes
                 WHERE id = @Id
-                  AND NOT EXISTS (SELECT 1 FROM combates c WHERE c.personaje1_id = @Id OR c.personaje2_id = @Id)";
+                  AND NOT EXISTS (SELECT 1 FROM combates c WHERE c.personaje1_id = @Id OR c.personaje2_id = @Id)
+                  AND NOT EXISTS (SELECT 1 FROM Batallas b WHERE b.combatiente1_id = @Id OR b.combatiente2_id = @Id)";
 
             using var connection = _connectionFactory.CrearConexion(TipoConexion.ApiAdministrador);
             return connection.Execute(sql, new { Id = id }) > 0;

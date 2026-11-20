@@ -11,7 +11,7 @@ namespace Persistencia.Repositorios
         int Agregar(PersonajeRegistro personaje);
         bool ActualizarNombre(int id, string nombre);
 
-        // Elimina solo si el personaje no participó en ningún combate.
+        // Elimina solo si el personaje no participó en ningún combate (de la API ni del simulador).
         bool EliminarSiNoParticipo(int id);
     }
 }

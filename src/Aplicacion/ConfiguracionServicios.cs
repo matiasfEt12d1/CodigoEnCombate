@@ -7,7 +7,7 @@ using Persistencia.Repositorios;
 
 namespace Aplicacion
 {
-    // Registro de dependencias del simulador (base codigo_en_combate).
+    // Registro de dependencias del simulador (tablas del simulador en combate_api).
     // Lo llama el programa principal (API/Program.cs); los servicios dependen de interfaces
     // y el contenedor decide qué implementación recibe cada uno.
     public static class ConfiguracionServicios

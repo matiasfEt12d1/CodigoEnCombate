@@ -43,8 +43,8 @@ namespace Persistencia.Repositorios
         {
             const string sqlPersonaje = @"
                 SELECT id AS Id, nombre AS Nombre, tipo AS Tipo, vida_max AS VidaMax, 
-                       vida AS Vida, ataque AS Ataque, defensa AS Defensa, escudo AS Escudo, 
-                       mana_max AS ManaMax, mana AS Mana, cantidad_flechas AS CantidadFlechas, 
+                       vida AS Vida, ataque AS Ataque, defensa AS Defensa, escudo_actual AS Escudo,
+                       mana_max AS ManaMax, mana AS Mana, flechas_actuales AS CantidadFlechas,
                        probabilidad_critico AS ProbabilidadCritico 
                 FROM Personajes WHERE id = @Id";
 
@@ -90,8 +90,8 @@ namespace Persistencia.Repositorios
         public int Agregar(Personaje entidad)
         {
             const string sql = @"
-                INSERT INTO Personajes (nombre, tipo, vida_max, vida, ataque, defensa, escudo, mana_max, mana, cantidad_flechas, probabilidad_critico)
-                VALUES (@Nombre, @Tipo, @VidaMax, @Vida, @Ataque, @Defensa, @Escudo, @ManaMax, @Mana, @CantidadFlechas, @ProbabilidadCritico);
+                INSERT INTO Personajes (nombre, tipo, vida_max, vida, ataque, defensa, escudo, escudo_actual, mana_max, mana, cantidad_flechas, flechas_actuales, probabilidad_critico)
+                VALUES (@Nombre, @Tipo, @VidaMax, @Vida, @Ataque, @Defensa, @Escudo, @Escudo, @ManaMax, @Mana, @CantidadFlechas, @CantidadFlechas, @ProbabilidadCritico);
                 SELECT LAST_INSERT_ID();";
 
             var pms = ObtenerParametros(entidad);
@@ -114,7 +114,7 @@ namespace Persistencia.Repositorios
             // Por ID: el nombre no es único y podría actualizar a otro personaje.
             const string sql = @"
                 UPDATE Personajes
-                SET vida = @Vida, ataque = @Ataque, defensa = @Defensa, escudo = @Escudo, mana = @Mana, cantidad_flechas = @CantidadFlechas
+                SET vida = @Vida, ataque = @Ataque, defensa = @Defensa, escudo_actual = @Escudo, mana = @Mana, flechas_actuales = @CantidadFlechas
                 WHERE id = @Id";
 
             var pms = ObtenerParametros(entidad);

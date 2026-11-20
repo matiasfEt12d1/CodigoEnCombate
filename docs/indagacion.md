@@ -70,12 +70,13 @@ En la API, cada conexión es una variable de entorno (`ConnectionStrings__ApiInv
 
 **¿Qué datos debe incluir un backup para restaurar el proyecto?**
 
-La estructura y los datos de `combate_api`. El backup [`backup/combate_api.sql`](../backup/combate_api.sql) se genera con `mysqldump --databases combate_api` y contiene:
+La estructura, los datos y los stored procedures de `combate_api`, que es la única base del proyecto (la API y el simulador del bimestre anterior). El backup [`backup/combate_api.sql`](../backup/combate_api.sql) se genera con `mysqldump --databases combate_api --routines` y contiene:
 - `CREATE DATABASE`, para que se pueda restaurar en un servidor vacío.
-- Los `CREATE TABLE` de `personajes`, `combates` y `turnos`, con sus claves primarias, claves foráneas, `CHECK` e índices.
+- Los `CREATE TABLE` de `personajes`, `combates` y `turnos` (API) y de `habilidades`, `batallas` e `historialbatallas` (simulador), con sus claves primarias, claves foráneas, `CHECK` e índices.
 - Los `INSERT` con los datos de muestra.
+- Los stored procedures del simulador (batallas y estadísticas). Sin `--routines`, `mysqldump` no los exporta.
 
-No contiene usuarios ni contraseñas. Los usuarios viven en la base del sistema `mysql`, no en `combate_api`, así que después de restaurar en un servidor nuevo hay que ejecutar `sql/02_usuarios.sql` con contraseñas propias. Tampoco contiene las cadenas de conexión, que están en variables de entorno. `--single-transaction` exporta una foto consistente sin bloquear las tablas, y `--skip-dump-date` y `--set-gtid-purged=OFF` evitan datos propios del servidor que impedirían restaurarlo en otro.
+No contiene usuarios ni contraseñas. Los usuarios viven en la base del sistema `mysql`, no en `combate_api`, así que después de restaurar en un servidor nuevo hay que ejecutar `sql/02_usuarios.sql` y `scripts/usuarios.sql` con contraseñas propias. Tampoco contiene las cadenas de conexión, que están en variables de entorno. `--single-transaction` exporta una foto consistente sin bloquear las tablas, y `--skip-dump-date` y `--set-gtid-purged=OFF` evitan datos propios del servidor que impedirían restaurarlo en otro.
 
 ### Correcciones a las hipótesis iniciales
 

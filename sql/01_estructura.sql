@@ -1,6 +1,8 @@
 -- =====================================================================
 -- 01_estructura.sql
 -- Crea la base combate_api y las tablas personajes, combates y turnos.
+-- Es la única base del proyecto: el simulador del bimestre anterior
+-- agrega sus tablas sobre ella con scripts/ddl.sql.
 -- Ejecutar con un usuario con permisos de creación (por ejemplo root).
 -- =====================================================================
 
@@ -16,17 +18,24 @@ USE combate_api;
 -- El recurso propio de cada tipo queda en su columna (NULL en el resto):
 --   Guerrero -> escudo | Mago -> mana_max | Arquero -> cantidad_flechas
 --   Asesino  -> probabilidad_critico
+-- vida, escudo_actual, mana y flechas_actuales son el estado actual que
+-- usa el simulador (scripts/); arrancan en vida_max, escudo, mana_max y
+-- cantidad_flechas. La API no las usa, así sus valores base no cambian.
 -- ---------------------------------------------------------------------
 CREATE TABLE personajes (
     id                   INT          NOT NULL AUTO_INCREMENT,
     nombre               VARCHAR(50)  NOT NULL,
     tipo                 ENUM('Guerrero', 'Mago', 'Arquero', 'Asesino') NOT NULL,
     vida_max             INT          NOT NULL,
+    vida                 INT          NOT NULL DEFAULT (vida_max),
     ataque               INT          NOT NULL,
     defensa              INT          NOT NULL,
     escudo               INT          NULL,
+    escudo_actual        INT          NULL DEFAULT (escudo),
     mana_max             INT          NULL,
+    mana                 INT          NULL DEFAULT (mana_max),
     cantidad_flechas     INT          NULL,
+    flechas_actuales     INT          NULL DEFAULT (cantidad_flechas),
     probabilidad_critico DECIMAL(3,2) NULL,
     fecha_creacion       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_personajes PRIMARY KEY (id),
@@ -35,7 +44,8 @@ CREATE TABLE personajes (
     CONSTRAINT ck_personajes_ataque   CHECK (ataque > 0),
     CONSTRAINT ck_personajes_defensa  CHECK (defensa >= 0),
     CONSTRAINT ck_personajes_escudo   CHECK (escudo IS NULL OR escudo >= 0),
-    CONSTRAINT ck_personajes_mana     CHECK (mana_max IS NULL OR mana_max > 0),
+    -- >= 0 porque el simulador guarda 0 (no NULL) en los recursos que no son de su tipo.
+    CONSTRAINT ck_personajes_mana     CHECK (mana_max IS NULL OR mana_max >= 0),
     CONSTRAINT ck_personajes_flechas  CHECK (cantidad_flechas IS NULL OR cantidad_flechas >= 0),
     CONSTRAINT ck_personajes_critico  CHECK (probabilidad_critico IS NULL OR probabilidad_critico BETWEEN 0 AND 1)
 ) ENGINE = InnoDB;
